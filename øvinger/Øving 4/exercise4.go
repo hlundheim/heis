@@ -34,22 +34,23 @@ func main() {
 
 	fmt.Println("Client started")
 	for {
-		defer backupSocket.Close()
 
-		backupSocket.SetDeadline(time.Now().Add(3 * time.Second))
+		backupSocket.SetReadDeadline(time.Now().Add(3 * time.Second))
 		buffer := make([]byte, 1024)
 		n, addr, err := backupSocket.ReadFrom(buffer)
 		if err != nil {
 			break
 		}
 		time.Sleep(time.Millisecond * 500)
-		tempString := string(buffer[0:n])
+		tempString := string(buffer[:n])
 		countingNr, err = strconv.Atoi(tempString)
 		fmt.Println("Errornr: ", errorNr, "countingNr: ", countingNr, "Addr: ", addr)
 
 		handleError(err)
 		//fmt.Printf(int(buffer[0:messageN]))
 	}
+
+	backupSocket.Close()
 
 	fmt.Println("----Primary phase----")
 	//create server
@@ -62,6 +63,7 @@ func main() {
 	//defer primarySocket.Close()
 	handleError(err)
 	//Creating backup
+	// DialDUP Write,,, 
 	fmt.Println("... creating new backup")
 	exec.Command("gnome-terminal", "--", "go", "run", "exercise4.go").Run()
 	fmt.Println("Resuming counting from ", countingNr)
