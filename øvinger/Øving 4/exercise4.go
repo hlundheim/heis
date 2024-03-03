@@ -21,7 +21,10 @@ func main() {
 	fmt.Println("----Backup phase----")
 	countingNr = 0
 	//create UDP client
-	port := "127.0.0.1:17000"
+	//port := "127.0.0.1:17000"
+	//port := "10.100.23.255:17000"
+	//port := "127.0.0.255:17000"
+	port := "255.255.255.255:17000"
 	a, err := net.ResolveUDPAddr("udp4", port)
 	handleError(err)
 	backupSocket, err := net.ListenUDP("udp4", a)
@@ -44,7 +47,8 @@ func main() {
 	//create server
 	//broadcastIP := "10.100.23.255:17000"
 	//broadcastIP := "127.0.0.255:17000"
-	broadcastIP := "127.0.0.1:17000"
+	//broadcastIP := "127.0.0.1:17000"
+	broadcastIP := "255.255.255.255:17000"
 	addr, err := net.ResolveUDPAddr("udp4", broadcastIP)
 	primarySocket, err := net.DialUDP("udp4", nil, addr)
 
