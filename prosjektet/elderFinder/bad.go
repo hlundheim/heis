@@ -25,9 +25,13 @@ func main() {
 	*/
 	ip := "127.0.0.1"
 	port := ":17000"
+	port2 := ":17001"
 	a, err := net.ResolveUDPAddr("udp4", ip+port)
+	a2, err := net.ResolveUDPAddr("udp4", ip+port2)
 	handleError(err)
 	listenSocket, err := net.ListenUDP("udp4", a)
+	listenSocket2, err := net.ListenUDP("udp4", a2)
+
 	broadcastSocket, err := net.DialUDP("udp4", nil, a)
 	for {
 		_, err := broadcastSocket.Write([]byte(birthday.Format(time.ANSIC)))
