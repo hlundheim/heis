@@ -24,8 +24,9 @@ func main() {
 	//port := "127.0.0.1:17000"
 	//port := "10.100.23.255:17000"
 	//port := "127.0.0.255:17000"
-	port := "255.255.255.255:17000"
-	a, err := net.ResolveUDPAddr("udp4", port)
+	ip := "127.0.0.1"
+	port := ":17000"
+	a, err := net.ResolveUDPAddr("udp4", ip+port)
 	handleError(err)
 	backupSocket, err := net.ListenUDP("udp4", a)
 	fmt.Println("Client started")
@@ -48,7 +49,7 @@ func main() {
 	//broadcastIP := "10.100.23.255:17000"
 	//broadcastIP := "127.0.0.255:17000"
 	//broadcastIP := "127.0.0.1:17000"
-	broadcastIP := "255.255.255.255:17000"
+	broadcastIP := "127.0.0.1:17000"
 	addr, err := net.ResolveUDPAddr("udp4", broadcastIP)
 	primarySocket, err := net.DialUDP("udp4", nil, addr)
 
