@@ -1,7 +1,0 @@
-Generell struktur
-Master slave med Elder
-Det sjekkes kontinuerlig mellom nodene hvilken som er gamlest, og om den gamleste ikke er elder, gjøres den til elder
-
-Hver heis har kø med orderer 
-Destination requests ordnes av den enkelte heis
-Elevator requests delegeres av Elder
