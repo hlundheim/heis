@@ -11,9 +11,9 @@ import (
 type ElevatorBehavior int
 
 const (
-	EB_Moving ElevatorBehavior = 1
-	EB_Stop                    = 0
-	EB_Idle                    = -1
+	EB_Moving   ElevatorBehavior = 1
+	EB_DoorOpen                  = 2
+	EB_Idle                      = 0
 )
 
 type ElevatorDirection int
@@ -34,6 +34,7 @@ type Elevator struct {
 //variables
 
 var numFloors = 4
+var jobsWaiting = false
 
 //init
 
@@ -64,7 +65,6 @@ func initElev(numFloors int, drv_floors chan int) Elevator {
 	floor := elevio.GetFloor()
 	if floor == -1 {
 		initBetweenFloors(elev, drv_floors)
-		//stoppe når den kommer til neste etasje
 	} else if floor != -1 {
 		elev.Floor = floor
 	}
@@ -82,18 +82,36 @@ func stopAtFloor(floor int, elev Elevator) {
 	elevio.SetButtonLamp(elevio.BT_Cab, floor, false)
 }
 
-func PollJobs(elev Elevator, jobAtFloor chan int) {
+func checkJobsWaiting(elev Elevator) bool {
+	//risky å sette lik false her??
+	jobsWaiting = false
 	for i := 0; i < len(elev.DRList); i++ {
 		if elev.DRList[i] {
-			jobAtFloor <- i
+			jobsWaiting = true
 		}
 	}
+	return jobsWaiting
+}
+
+func requestsAbove(elev Elevator) bool {
+	for i := elev.Floor + 1; i < numFloors; i++ {
+		if elev.DRList[i] {
+			return true
+		}
+	}
+	return false
+}
+
+func requestsBelow(elev Elevator) bool {
+	for i := 0; i < elev.Floor; i++ {
+		if elev.DRList[i] {
+			return true
+		}
+	}
+	return false
 }
 
 func main() {
-
-	//var d elevio.MotorDirection
-	numFloors := 4
 
 	elevio.Init("localhost:15657", numFloors)
 
@@ -110,15 +128,13 @@ func main() {
 
 	elev := initElev(numFloors, drv_floors)
 
-	//go PollJobs(elev, jobAtFloor)
-	println(elev.DRList)
 	//funksjon som starter heisen og venter på knappetrykk
 
 	for {
 		select {
 		case button := <-drv_buttons:
 			fmt.Printf("%+v\n", button)
-			if button.Button == 2 { //2 = DR
+			if button.Button == elevio.BT_Cab { // = DR
 				//sette inn en funksjon som gjør dette
 				elev.DRList[button.Floor] = true
 				//hvis det ble registrert i listen at en etasje ble satt til true, da skal lampen skrus på
@@ -127,20 +143,39 @@ func main() {
 			} //legge inn else if for hallbuttons også
 
 		case pickup := <-jobAtFloor:
-			if pickup < elev.Floor {
-				elev.Behavior = EB_Moving
-				elev.Direction = ED_Down
-				elevio.SetMotorDirection(elevio.MD_Down)
-			} else if pickup > elev.Floor {
-				elev.Behavior = EB_Moving
-				elev.Direction = ED_Up
-				elevio.SetMotorDirection(elevio.MD_Up)
+			//what if elev.Floor = -1?
+			//skal fullføre jobben først før den går til neste
+			switch elev.Behavior {
+			case EB_DoorOpen:
+				//wait for it to close before changing direction
+			case EB_Moving:
+				//noe
+			case EB_Idle:
+				if pickup < elev.Floor {
+					elev.Behavior = EB_Moving
+					elev.Direction = ED_Down
+					elevio.SetMotorDirection(elevio.MD_Down)
+				} else if pickup > elev.Floor {
+					elev.Behavior = EB_Moving
+					elev.Direction = ED_Up
+					elevio.SetMotorDirection(elevio.MD_Up)
+				} else {
+					stopAtFloor(pickup, elev)
+				}
 			}
+
 		case newFloor := <-drv_floors:
 			fmt.Printf("%+v\n", newFloor)
+			if newFloor == -1 {
+				continue
+			} else if newFloor != -1 {
+				elev.Floor = newFloor
+				elevio.SetFloorIndicator(newFloor)
+			}
 			if elev.DRList[newFloor] {
 				stopAtFloor(newFloor, elev)
 			}
+
 		case stop := <-drv_stop:
 			//endre slik at den ikke skrur av alle lys
 			fmt.Printf("%+v\n", stop)
@@ -153,6 +188,12 @@ func main() {
 				elevio.SetMotorDirection(elevio.MD_Stop)
 			}
 		default:
+			go checkJobsWaiting(elev)
+			if jobsWaiting {
+				if requestsAbove(elev) {
+
+				}
+			}
 			elev.Behavior = EB_Idle
 			elev.Direction = ED_Stop
 			elevio.SetMotorDirection(elevio.MD_Stop)
