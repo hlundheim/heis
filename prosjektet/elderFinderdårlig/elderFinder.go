@@ -41,7 +41,7 @@ func listenBirthday(output chan string, listenIP string, port string) {
 func main() {
 	birthday := time.Now()
 	ch1 := make(chan string)
-	broadcastIP := "10.0.0.255"
+	broadcastIP := "255.255.255.255"
 	listenerIP := "0.0.0.0"
 	port := ":57000"
 
