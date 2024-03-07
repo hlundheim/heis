@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"os"
 	"log"
+	//"strings"
+	//"bufio" 
+	"encoding/json"
+//provides buffered I/O. A teqnique that allows a program to read or write data in chuncks rather than one byte at a time. More effective and predictable.
 )
 
 
-var file *os.File // Declare a global variable to hold the file handle
-
 func writeToFile(str string) {
-
+	
+	var file *os.File // Declare a global variable to hold the file handle
 	//str is the string you want to write to a file
 
 	file, err := os.OpenFile("test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
@@ -51,7 +54,7 @@ func writeToFile(str string) {
 	if err != nil {
 		log.Fatalf("failed writing to file: %s", err)
 	}
-
+	
 	fmt.Printf("Data written to file: %d bytes\n", len) */
 }
 
@@ -68,13 +71,62 @@ func readFromFile() {
 
 }
 
+
+func DRReqToFile(values []bool) {
+	// Open the file for writing, create if it doesn't exist, truncate the file
+	file, err := os.Create("testBool.txt")
+	if err != nil {
+		log.Fatalf("failed opening file: %s", err)
+	}
+	defer file.Close() // Close the file when writeToFile function exits
+
+	// Encode the boolean values as a JSON array
+	data, err := json.Marshal(values)
+	if err != nil {
+		log.Fatalf("failed encoding JSON: %s", err)
+	}
+
+	// Write the JSON data to the file
+	len, err := file.Write(data)
+	if err != nil {
+		log.Fatalf("failed writing to file: %s", err)
+	}
+
+	fmt.Printf("Data written to file: %d bytes\n", len)
+}
+
+func DRreqReadFile() []bool{
+	// Open the file for reading
+	file, err := os.Open("testBool.txt")
+	if err != nil {
+		log.Fatalf("failed opening file: %s", err)
+	}
+	defer file.Close() // Close the file when readFromFile function exits
+
+	// Decode the JSON array from the file
+	var values []bool
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&values); err != nil {
+		log.Fatalf("failed decoding JSON: %s", err)
+	}
+
+	return values
+}
+
 func main() {
 
+	/*
 	writeToFile("First line")
 	writeToFile("Second line")
 	writeToFile("Third line")
 
-	readFromFile()
+	readFromFile()*/
+
+	boolVector := []bool{true, false, false, false}
+	DRReqToFile(boolVector)
+
+	readValues := DRreqReadFile()
+	fmt.Println("Read from file:", readValues)
 	
 
 }
