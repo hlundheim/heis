@@ -8,7 +8,3 @@ func HandleError(err error) {
 	}
 	return
 }
-
-func Hello() {
-	fmt.Print("hello")
-}
