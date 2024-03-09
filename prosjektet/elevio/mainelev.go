@@ -1,8 +1,8 @@
 package main
 
 import (
+	"Driver-go/elevio"
 	"fmt"
-	"prosjektet/elevio"
 	"time"
 )
 

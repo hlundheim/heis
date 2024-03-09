@@ -67,7 +67,11 @@ func initElev(numFloors int, drv_floors chan int) Elevator {
 	if floor == -1 {
 		initBetweenFloors(elev, drv_floors)
 	} else if floor != -1 {
+		elev.Behavior = EB_Idle
+		elev.Direction = ED_Stop
+		elevio.SetMotorDirection(elevio.MD_Stop)
 		elev.Floor = floor
+		elevio.SetFloorIndicator(floor)
 	}
 	return elev
 }
@@ -78,10 +82,10 @@ func stopAtFloor(floor int, elev Elevator) {
 	elevio.SetMotorDirection(elevio.MD_Stop)
 	elev.DRList[floor] = false
 	elevio.SetDoorOpenLamp(true)
+	elev.Behavior = EB_DoorOpen
 	elevio.SetButtonLamp(elevio.BT_Cab, floor, false)
 	time.Sleep(3 * time.Second)
 	elevio.SetDoorOpenLamp(false)
-	//test:
 	elev.Behavior = EB_Idle
 	//go checkForJobsInDirection(elev)
 }
@@ -89,10 +93,15 @@ func stopAtFloor(floor int, elev Elevator) {
 func checkForJobsInDirection(elev Elevator) {
 	switch elev.Direction {
 	case ED_Up:
+		//println("Inside ED_up case of checkforjobsindirection function")
 		if requestsAbove(elev) {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Up
 			elevio.SetMotorDirection(elevio.MD_Up)
+		} else if requestsBelow(elev) {
+			elev.Behavior = EB_Moving
+			elev.Direction = ED_Down
+			elevio.SetMotorDirection(elevio.MD_Down)
 		} else {
 			elev.Behavior = EB_Idle
 			elev.Direction = ED_Stop
@@ -102,12 +111,28 @@ func checkForJobsInDirection(elev Elevator) {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Down
 			elevio.SetMotorDirection(elevio.MD_Down)
+		} else if requestsAbove(elev) {
+			elev.Behavior = EB_Moving
+			elev.Direction = ED_Up
+			elevio.SetMotorDirection(elevio.MD_Up)
 		} else {
 			elev.Behavior = EB_Idle
 			elev.Direction = ED_Stop
 		}
 	default:
-		elev.Behavior = EB_Idle
+		if checkJobsWaiting(elev) {
+			if requestsAbove(elev) {
+				elev.Behavior = EB_Moving
+				elev.Direction = ED_Up
+				elevio.SetMotorDirection(elevio.MD_Up)
+			} else if requestsBelow(elev) {
+				elev.Behavior = EB_Moving
+				elev.Direction = ED_Down
+				elevio.SetMotorDirection(elevio.MD_Down)
+			} else {
+				elev.Behavior = EB_Idle
+			}
+		}
 	}
 }
 
@@ -144,6 +169,7 @@ func checkAndHandleJobs(elev Elevator) {
 	if checkJobsWaiting(elev) {
 		switch elev.Behavior {
 		case EB_Idle:
+			//println("Inside idle case of checkandhandlejobs function")
 			if requestsAbove(elev) {
 				elev.Behavior = EB_Moving
 				elev.Direction = ED_Up
@@ -154,11 +180,14 @@ func checkAndHandleJobs(elev Elevator) {
 				elevio.SetMotorDirection(elevio.MD_Down)
 			}
 		case EB_Moving:
+			//println("Inside moving case of checkandhandlejobs function")
 			//Utføre jobben
 		case EB_DoorOpen:
+			//println("Inside dooropen case of checkandhandlejobs function")
 			//Vente til dørene lukkes og sjekke etter jobber
 		}
 	} else {
+		//println("Inside idle case of else part of the checkandhandlejobs function")
 		switch elev.Behavior {
 		case EB_DoorOpen:
 			elev.Behavior = EB_Idle
@@ -189,6 +218,9 @@ func main() {
 			elevio.SetButtonLamp(b, f, false)
 		}
 	}
+
+	elevio.SetDoorOpenLamp(false)
+
 	//end of code for testing purposes
 
 	//funksjon som starter heisen og venter på knappetrykk
@@ -242,12 +274,11 @@ func main() {
 			}
 		default:
 			//go checkAndHandleJobs(elev)
-			fmt.Println(elev.Behavior)
-			fmt.Printf("DR: ", elev.DRList)
-			time.Sleep(1 * time.Second)
+
 			if checkJobsWaiting(elev) {
 				switch elev.Behavior {
 				case EB_Idle:
+					//println("Inside idle case of default")
 					if requestsAbove(elev) {
 						elev.Behavior = EB_Moving
 						elev.Direction = ED_Up
@@ -258,21 +289,28 @@ func main() {
 						elevio.SetMotorDirection(elevio.MD_Down)
 					}
 				case EB_Moving:
+					//println("Inside moving case of default")
 					//Utføre jobben
 					continue
 				case EB_DoorOpen:
-					//Vente til dørene lukkes og sjekke etter jobber
+					for elevio.GetDoorOpenLight() {
+						time.Sleep(100 * time.Millisecond)
+					}
 					continue
 				}
 			} else {
 				switch elev.Behavior {
 				case EB_DoorOpen:
+					for elevio.GetDoorOpenLight() {
+						time.Sleep(100 * time.Millisecond)
+					}
 					elev.Behavior = EB_Idle
 					elev.Direction = ED_Stop
 				case EB_Moving:
+					//println("Inside moving case of else switch in default")
 					//wait for it to stop moving by reaching a floor
 
-					elev.Behavior = EB_Idle //A TEST
+					//elev.Behavior = EB_Idle //A TEST
 					continue
 				}
 			}
