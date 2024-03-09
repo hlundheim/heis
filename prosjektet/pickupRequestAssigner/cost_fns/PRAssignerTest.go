@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 )
-
-func arrayMerger(PRArray1, PRArray2, PRArray3 [][2]bool) [][2]bool {
+//avhengig av å få inn 3 arrays
+func array3Merger(PRArray1, PRArray2, PRArray3 [][2]bool) [][2]bool {
 	var mergedArray [][2]bool
 	for i := 0; i < len(PRArray1); i++ {
 		var mergedFloorValue [2]bool
@@ -24,10 +24,29 @@ func arrayMerger(PRArray1, PRArray2, PRArray3 [][2]bool) [][2]bool {
 	return mergedArray
 }
 
-func main() {
-	PRArray1 := [][2]bool{{false, false}, {false, false}, {false, true}, {false, false}}
-	PRArray2 := [][2]bool{{true, false}, {false, false}, {false, false}, {false, false}}
-	PRArray3 := [][2]bool{{true, true}, {false, false}, {false, false}, {false, false}}
+func ArrayMerger(PR ...[][2]bool) [][2]bool{
+	var mergedArray [][2]bool
+	//var mergedFloor [2]bool
 
-	fmt.Println(arrayMerger(PRArray1, PRArray2, PRArray3))
+	for floorValue := 0; floorValue < len(PR[0]); floorValue++ {
+		for _, elevPR := range PR{
+			if PR[0][floorValue] == elevPR[floorValue] {
+				mergedArray = append(mergedArray,elevPR[floorValue])
+			}
+		}
+		
+	}
+	return mergedArray
+}
+
+func main() {
+	
+	//PRArray1 := [][2]bool{{false, false}, {false, false}, {false, true}, {false, false}}
+	//PRArray2 := [][2]bool{{true, false}, {false, false}, {false, false}, {false, false}}
+	//PRArray3 := [][2]bool{{true, true}, {false, false}, {false, false}, {false, false}}
+
+	//fmt.Println(array3Merger(PRArray1, PRArray2, PRArray3))
+	PRArray1 := [][2]bool{{false, false}, {false, false}, {false, false}, {false, false}}
+	PRArray2 := [][2]bool{{false, false}, {false, false}, {false, false}, {false, false}}
+	fmt.Println(ArrayMerger(PRArray1,PRArray2))
 }
