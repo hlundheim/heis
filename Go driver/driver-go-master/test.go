@@ -35,7 +35,6 @@ type Elevator struct {
 //variables
 
 var numFloors = 4
-var jobsWaiting = false
 
 //init
 
@@ -114,7 +113,7 @@ func checkForJobsInDirection(elev Elevator) {
 
 func checkJobsWaiting(elev Elevator) bool {
 	//risky å sette lik false her??
-	jobsWaiting = false
+	jobsWaiting := false
 	for i := 0; i < len(elev.DRList); i++ {
 		if elev.DRList[i] {
 			jobsWaiting = true
@@ -244,6 +243,7 @@ func main() {
 		default:
 			//go checkAndHandleJobs(elev)
 			fmt.Println(elev.Behavior)
+			fmt.Printf("DR: ", elev.DRList)
 			time.Sleep(1 * time.Second)
 			if checkJobsWaiting(elev) {
 				switch elev.Behavior {
@@ -271,6 +271,8 @@ func main() {
 					elev.Direction = ED_Stop
 				case EB_Moving:
 					//wait for it to stop moving by reaching a floor
+
+					elev.Behavior = EB_Idle //A TEST
 					continue
 				}
 			}
