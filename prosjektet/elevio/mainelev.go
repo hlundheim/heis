@@ -304,37 +304,13 @@ func main() {
 			}
 
 		case stop := <-drv_stop:
-			//endre slik at den ikke skrur av alle lys
+			//gjør ingenting per nå
 			fmt.Printf("%+v\n", stop)
-			for f := 0; f < numFloors; f++ {
-				for b := elevio.ButtonType(0); b < 3; b++ {
-					elevio.SetButtonLamp(b, f, false)
-				}
-			}
-			if stop {
-				elevio.SetMotorDirection(elevio.MD_Stop)
-			}
 
 		case obstruct := <-drv_obstr:
+			//obstr brukes i stopatfloor, men gjør ingenting her. trenger ikke dette tror jeg
 			fmt.Printf("%+v\n", obstruct)
-			/*if obstruct {
-				switch elev.Behavior {
-				case EB_DoorOpen:
-					fmt.Println("Before for loop in obstr")
-					time.Sleep(1 * time.Second)
-					for obstruct {
-						elevio.SetDoorOpenLamp(true)
-						elevio.SetMotorDirection(elevio.MD_Stop)
-						elev.Behavior = EB_DoorOpen
-					}
-					fmt.Println("After for loop in obstr")
-					time.Sleep(1 * time.Second)
-					go checkForJobsInDirection()
-					//gå tilbake til state den hadde før obstruct
-				}
-			} else {
-				continue
-			}*/
+
 		default:
 			//go checkAndHandleJobs(elev)
 
