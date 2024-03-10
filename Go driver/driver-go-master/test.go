@@ -108,13 +108,13 @@ func stopAtFloor(floor int) {
 	os.Stdout.Sync()
 	time.Sleep(3 * time.Second)
 	elevio.SetDoorOpenLamp(false)
-	elev.Behavior = EB_Idle //TESTSETTING
+	//elev.Behavior = EB_Idle //TESTSETTING
 	fmt.Println("End of stopAtFloor")
 	fmt.Println("Elev behavior: ", elev.Behavior)
 	fmt.Println("Elev direction: ", elev.Direction)
 	fmt.Println("DR list: ", elev.DRList)
 	os.Stdout.Sync()
-	//go checkForJobsInDirection()
+	go checkForJobsInDirection()
 }
 
 func checkForJobsInDirection() {
@@ -129,6 +129,8 @@ func checkForJobsInDirection() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Down
 			elevio.SetMotorDirection(elevio.MD_Down)
+		} else if requestsHere() {
+			stopAtFloor(elev.Floor)
 		} else {
 			elev.Behavior = EB_Idle
 			elev.Direction = ED_Stop
@@ -142,6 +144,8 @@ func checkForJobsInDirection() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Up
 			elevio.SetMotorDirection(elevio.MD_Up)
+		} else if requestsHere() {
+			stopAtFloor(elev.Floor)
 		} else {
 			elev.Behavior = EB_Idle
 			elev.Direction = ED_Stop
@@ -158,6 +162,7 @@ func checkForJobsInDirection() {
 				elevio.SetMotorDirection(elevio.MD_Down)
 			} else {
 				elev.Behavior = EB_Idle
+				elev.Direction = ED_Stop
 			}
 		}
 	}
@@ -230,16 +235,6 @@ func checkAndHandleJobs() {
 	}
 }
 
-func waitForDoorsClose() {
-	fmt.Println("Start of waitfordoors")
-	os.Stdout.Sync()
-	for elevio.GetDoorOpenLight() {
-		time.Sleep(100 * time.Millisecond)
-	}
-	fmt.Println("End of waitfordoors")
-	os.Stdout.Sync()
-}
-
 func main() {
 
 	elevio.Init("localhost:15657", numFloors)
@@ -266,8 +261,6 @@ func main() {
 	elevio.SetDoorOpenLamp(false)
 
 	//end of code for testing purposes
-
-	//funksjon som starter heisen og venter på knappetrykk
 
 	for {
 		select {
@@ -339,22 +332,7 @@ func main() {
 						elevio.SetMotorDirection(elevio.MD_Down)
 					}
 				case EB_Moving:
-					//println("Inside moving case of default")
-					//time.Sleep(1 * time.Second)
-					//os.Stdout.Sync()
-					//Utføre jobben
-					continue
-					//case EB_DoorOpen:
-					//println("Inside dooropen case of default")
-					//time.Sleep(1 * time.Second)
-					//os.Stdout.Sync()
-					//for elevio.GetDoorOpenLight() {
-					//	println("Inside for loop of dooropen case of default")
-					//	time.Sleep(1 * time.Second)
-					//	os.Stdout.Sync()
-					//	time.Sleep(100 * time.Millisecond)
-					//}
-					//continue
+
 				}
 			} else {
 				switch elev.Behavior {
