@@ -1,4 +1,4 @@
-package main
+package elevatorLifeStates
 
 import (
 	"fmt"
@@ -7,14 +7,21 @@ import (
 	"time"
 )
 
-func UpdateHandler(elevUpdates chan peers.PeerUpdate) {
+var LocalBirthday = time.Now().Format(time.RFC3339Nano)
+
+func UpdateHandler(elevUpdates chan peers.PeerUpdate, liveElevUpdates chan []string) {
 	for {
 		update := <-elevUpdates
-		elevs := sortElevsByAge(update.Peers)
-		fmt.Println("live elevs: %s  ", elevs)
+		fmt.Println("live elevs: %s  ", update.Peers)
 		fmt.Println("new elevs: %s  ", update.New)
 		fmt.Println("lost elevs: %s  ", update.Lost)
+		liveElevUpdates <- sortElevsByAge(update.Peers)
 	}
+}
+
+func CheckIfElder(liveElevs []string) bool {
+	elderBirthday := liveElevs[0]
+	return (elderBirthday == LocalBirthday)
 }
 
 func sortElevsByAge(liveElevs []string) []string {
@@ -36,22 +43,11 @@ func sortElevsByAge(liveElevs []string) []string {
 	return liveElevs
 }
 
-func main() {
-	localBirthday := time.Now()
+func Initialize(liveElevUpdates chan []string) {
 	port := 57000
 	elevUpdateEN := make(chan bool)
 	elevUpdates := make(chan peers.PeerUpdate)
-	go peers.Transmitter(port, localBirthday.Format(time.RFC3339Nano), elevUpdateEN)
+	go peers.Transmitter(port, LocalBirthday, elevUpdateEN)
 	go peers.Receiver(port, elevUpdates)
-	go UpdateHandler(elevUpdates)
-	for {
-		time.Sleep(10 * time.Microsecond)
-		/*
-			time.Sleep(4 * time.Second)
-			elevUpdateEN <- true
-			time.Sleep(4 * time.Second)
-			elevUpdateEN <- false
-		*/
-	}
-
+	go UpdateHandler(elevUpdates, liveElevUpdates)
 }

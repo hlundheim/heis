@@ -19,11 +19,8 @@ type HRAElevState struct {
 
 type HRAInput struct {
 	hallRequests [][2]bool               `json:"hallRequests"`
-	States         map[string]HRAElevState `json:"states"`
+	States       map[string]HRAElevState `json:"states"`
 }
-
-
-
 
 func main() {
 
@@ -41,7 +38,7 @@ func main() {
 	input := HRAInput{
 		hallRequests: [][2]bool{{false, false}, {true, false}, {false, false}, {false, true}},
 		States: map[string]HRAElevState{
-		//dette er informasjonen som kommer inn fra heisen fra hall assigner 
+			//dette er informasjonen som kommer inn fra heisen fra hall assigner
 			"one": HRAElevState{
 				Behavior:    "moving",
 				Floor:       2,
@@ -62,9 +59,9 @@ func main() {
 		fmt.Println("json.Marshal error: ", err)
 		return
 	}
-	fullPath := "C:\\Users\\nelin\\OneDrive - NTNU\\Semester 6\\TTK4145 Sanntidsprogrammering\\heis test\\prAssigner\\Project-resources\\cost_fns\\usage_examples\\" + hraExecutable
+	//fullPath := "C:\\Users\\nelin\\OneDrive - NTNU\\Semester 6\\TTK4145 Sanntidsprogrammering\\heis test\\prAssigner\\Project-resources\\cost_fns\\usage_examples\\" + hraExecutable
 
-	ret, err := exec.Command(fullPath, "-i", string(jsonBytes)).CombinedOutput()
+	ret, err := exec.Command("./"+hraExecutable, "-i", string(jsonBytes)).CombinedOutput()
 	if err != nil {
 		fmt.Println("exec.Command error: ", err)
 		fmt.Println(string(ret))

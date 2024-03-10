@@ -14,14 +14,6 @@ func genBlankPRs(floors int) [][]bool {
 	return PRs
 }
 
-func RecieveNewPRs() {
-
-}
-
-func RecievePRCompletions() {
-
-}
-
 func UpdatePRs(PRs [][]bool, NewPRs chan [][]bool, PRCompletions chan [][]bool, UpdatedPRs chan [][]bool) {
 	for {
 		select {
@@ -49,8 +41,12 @@ func UpdatePRs(PRs [][]bool, NewPRs chan [][]bool, PRCompletions chan [][]bool, 
 	}
 }
 
-func BroadcastPRs() {
-
+// Dette er teit er det ikke det?
+func BroadcastPRs(PRBroadcast chan [][]bool, PRUpdates chan [][]bool) {
+	for {
+		PRBroadcast <- <-PRUpdates
+		time.Sleep(1 * time.Microsecond)
+	}
 }
 
 func main() {
@@ -60,20 +56,23 @@ func main() {
 	NewPRs := make(chan [][]bool)
 	PRCompletions := make(chan [][]bool)
 	PRUpdates := make(chan [][]bool)
-	go bcast.Receiver(port, PRCompletions)
+	PRBroadcast := make(chan [][]bool)
+
 	go bcast.Receiver(port, NewPRs)
+	go bcast.Receiver(port+1, PRCompletions)
 	go UpdatePRs(PRs, NewPRs, PRCompletions, PRUpdates)
-	for {
-		/*
-			NewPRs <- [][]bool{{true, false}, {false, false}, {false, false}, {false, false}}
-			PRs = <-PRUpdates
-			NewPRs <- [][]bool{{false, false}, {false, false}, {false, true}, {false, false}}
-			PRs = <-PRUpdates
-			PRCompletions <- [][]bool{{false, false}, {false, false}, {false, true}, {false, false}}
-			PRs = <-PRUpdates
-			PRCompletions <- [][]bool{{true, true}, {false, true}, {false, false}, {false, false}}
-			PRs = <-PRUpdates
-		*/
-		time.Sleep(1 * time.Microsecond)
-	}
+	go bcast.Transmitter(port+2, PRBroadcast)
+	go BroadcastPRs(PRBroadcast, PRUpdates)
+	/*
+		for {
+				NewPRs <- [][]bool{{true, false}, {false, false}, {false, false}, {false, false}}
+				PRs = <-PRUpdates
+				NewPRs <- [][]bool{{false, false}, {false, false}, {false, true}, {false, false}}
+				PRs = <-PRUpdates
+				PRCompletions <- [][]bool{{false, false}, {false, false}, {false, true}, {false, false}}
+				PRs = <-PRUpdates
+				PRCompletions <- [][]bool{{true, true}, {false, true}, {false, false}, {false, false}}
+				PRs = <-PRUpdates
+		}
+	*/
 }
