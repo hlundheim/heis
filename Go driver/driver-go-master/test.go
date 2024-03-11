@@ -105,6 +105,30 @@ func initElev(numFloors int, drv_floors chan int) {
 
 //functions
 
+func atFloorArrival(newFloor int) {
+	if elev.DRList[newFloor] {
+		go stopAtFloor(newFloor)
+	}
+	if newFloor != -1 {
+		elev.Floor = newFloor
+		elevio.SetFloorIndicator(newFloor)
+	}
+	switch elev.Direction {
+	case ED_Up:
+		if elev.PRList[newFloor][0] {
+			go stopAtFloor(newFloor)
+		} else if !elev.PRList[newFloor][0] && elev.PRList[newFloor][1] && !requestsAbove() { //stopper for requests kun ned om ingenting over
+			go stopAtFloor(newFloor)
+		}
+	case ED_Down:
+		if elev.PRList[newFloor][1] {
+			go stopAtFloor(newFloor)
+		} else if !elev.PRList[newFloor][1] && elev.PRList[newFloor][0] && !requestsBelow() { //stopper for requests kun opp om ingenting under
+			go stopAtFloor(newFloor)
+		}
+	}
+}
+
 func updateButtonLightsAndLists(floor int) {
 	elev.DRList[floor] = false
 	elevio.SetButtonLamp(elevio.BT_Cab, floor, false)
@@ -122,6 +146,7 @@ func updateButtonLightsAndLists(floor int) {
 		} else if elev.PRList[floor][0] && !elev.PRList[floor][1] {
 			elev.PRList[floor][0] = false
 			elevio.SetButtonLamp(elevio.BT_HallUp, floor, false)
+			//fjerne den under?
 		} else if elev.PRList[floor][1] && !elev.PRList[floor][0] && !requestsAbove() {
 			elev.PRList[floor][1] = false
 			elevio.SetButtonLamp(elevio.BT_HallDown, floor, false)
@@ -135,6 +160,7 @@ func updateButtonLightsAndLists(floor int) {
 		} else if elev.PRList[floor][1] && !elev.PRList[floor][0] {
 			elev.PRList[floor][1] = false
 			elevio.SetButtonLamp(elevio.BT_HallDown, floor, false)
+			//fjerne den under?
 		} else if elev.PRList[floor][0] && !elev.PRList[floor][1] && !requestsBelow() {
 			elev.PRList[floor][0] = false
 			elevio.SetButtonLamp(elevio.BT_HallUp, floor, false)
@@ -171,15 +197,17 @@ func stopAtFloor(floor int) {
 		//check if there are DR or PR orders in the direction of PR, if not, the door should stay open three extra seconds
 		switch elev.Direction {
 		case ED_Up:
-			if !requestsAbove() && elev.PRList[floor][0] && elev.Floor != numFloors-1 {
+			if elev.PRList[floor][1] && !elev.PRList[floor][0] && !requestsAbove() && elev.Floor != numFloors-1 {
 				elev.Direction = ED_Down
-				updateButtonLightsAndLists(elev.Floor)
+				elev.PRList[floor][1] = false
+				elevio.SetButtonLamp(elevio.BT_HallDown, floor, false)
 				time.Sleep(3 * time.Second)
 			}
 		case ED_Down:
-			if !requestsBelow() && elev.PRList[floor][1] && elev.Floor != 0 {
+			if elev.PRList[floor][0] && !elev.PRList[floor][1] && !requestsBelow() && elev.Floor != 0 {
 				elev.Direction = ED_Up
-				updateButtonLightsAndLists(elev.Floor)
+				elev.PRList[floor][0] = false
+				elevio.SetButtonLamp(elevio.BT_HallUp, floor, false)
 				time.Sleep(3 * time.Second)
 			}
 		}
@@ -189,15 +217,17 @@ func stopAtFloor(floor int) {
 		//check if there are DR or PR orders in the direction of PR, if not, the door should stay open three extra seconds
 		switch elev.Direction {
 		case ED_Up:
-			if !requestsAbove() && elev.PRList[floor][0] && elev.Floor != numFloors-1 {
+			if elev.PRList[floor][1] && !elev.PRList[floor][0] && !requestsAbove() && elev.Floor != numFloors-1 {
 				elev.Direction = ED_Down
-				updateButtonLightsAndLists(elev.Floor)
+				elev.PRList[floor][1] = false
+				elevio.SetButtonLamp(elevio.BT_HallDown, floor, false)
 				time.Sleep(3 * time.Second)
 			}
 		case ED_Down:
-			if !requestsBelow() && elev.PRList[floor][1] && elev.Floor != 0 {
+			if elev.PRList[floor][0] && !elev.PRList[floor][1] && !requestsBelow() && elev.Floor != 0 {
 				elev.Direction = ED_Up
-				updateButtonLightsAndLists(elev.Floor)
+				elev.PRList[floor][0] = false
+				elevio.SetButtonLamp(elevio.BT_HallUp, floor, false)
 				time.Sleep(3 * time.Second)
 			}
 		}
@@ -218,6 +248,7 @@ func checkForJobsInDirection() {
 		os.Stdout.Sync()
 		if DRHere() {
 			stopAtFloor(elev.Floor)
+			//Legge inn å sjekke for PR å åpne døra igjen?
 		} else if requestsAbove() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Up
@@ -235,6 +266,7 @@ func checkForJobsInDirection() {
 		os.Stdout.Sync()
 		if DRHere() {
 			stopAtFloor(elev.Floor)
+			//Legge inn å sjekke for PR å åpne døra igjen?
 		} else if requestsBelow() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Down
@@ -294,14 +326,18 @@ func requestsAbove() bool {
 	for i := elev.Floor + 1; i < numFloors; i++ {
 		if elev.DRList[i] {
 			return true
+		} else if elev.PRList[i][0] || elev.PRList[i][1] {
+			return true
 		}
-	}
+	} //Må PR være avhengig av retning?
 	return false
 }
 
 func requestsBelow() bool {
 	for i := 0; i < elev.Floor; i++ {
 		if elev.DRList[i] {
+			return true
+		} else if elev.PRList[i][0] || elev.PRList[i][1] {
 			return true
 		}
 	}
@@ -391,31 +427,17 @@ func main() {
 
 		case newFloor := <-drv_floors:
 			fmt.Printf("%+v\n", newFloor)
-			if elev.DRList[newFloor] {
-				go stopAtFloor(newFloor)
-			}
-			if newFloor != -1 {
-				elev.Floor = newFloor
-				elevio.SetFloorIndicator(newFloor)
-			}
-			switch elev.Direction {
-			case ED_Up:
-				if elev.PRList[newFloor][0] {
-					go stopAtFloor(newFloor)
-				}
-			case ED_Down:
-				if elev.PRList[newFloor][1] {
-					go stopAtFloor(newFloor)
-				}
-			}
+			atFloorArrival(newFloor)
 
 		case stop := <-drv_stop:
 			//gjør ingenting per nå
 			fmt.Printf("%+v\n", stop)
-
-		case obstruct := <-drv_obstr:
-			//obstr brukes i stopatfloor, men gjør ingenting her. trenger ikke dette tror jeg
-			fmt.Printf("%+v\n", obstruct)
+			var d = elevio.GetMotorDirection()
+			for elevio.GetStop() {
+				elevio.SetMotorDirection(elevio.MD_Stop)
+				time.Sleep(100 * time.Millisecond)
+			}
+			elevio.SetMotorDirection(d)
 
 		default:
 			if hasJobsWaiting() {
