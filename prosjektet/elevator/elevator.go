@@ -34,12 +34,12 @@ func CreateElev() Elevator {
 	elev := Elevator{}
 	elev.DRList = make([]bool, numFloors)
 	elev.PRList = make([][]bool, numFloors)
-	generateDRArray(numFloors, elev.DRList)
-	generatePRArray(elev.PRList)
+	GenerateDRArray(numFloors, elev.DRList)
+	GeneratePRArray(elev.PRList)
 	return elev
 }
 
-func generateDRArray(numFloors int, DRList []bool) []bool {
+func GenerateDRArray(numFloors int, DRList []bool) []bool {
 	for i := 0; i < numFloors; i++ {
 		DRList[i] = false
 	}
@@ -47,7 +47,7 @@ func generateDRArray(numFloors int, DRList []bool) []bool {
 	return DRList
 }
 
-func generatePRArray(PRList [][]bool) [][]bool {
+func GeneratePRArray(PRList [][]bool) [][]bool {
 	for i := range PRList {
 		PRList[i] = make([]bool, 2)
 	}
