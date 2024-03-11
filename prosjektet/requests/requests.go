@@ -105,8 +105,6 @@ func updateButtonLightsAndLists(floor int) {
 func checkForJobsInDirection() {
 	switch elev.Direction {
 	case ED_Up:
-		fmt.Println("Inside ED_up case of checkforjobsindirection function")
-		os.Stdout.Sync()
 		if DRHere() {
 			stopAtFloor(elev.Floor)
 			//Legge inn å sjekke for PR å åpne døra igjen?
@@ -123,8 +121,6 @@ func checkForJobsInDirection() {
 			elev.Direction = ED_Stop
 		}
 	case ED_Down:
-		fmt.Println("Inside ED_down case of checkforjobsindirection function")
-		os.Stdout.Sync()
 		if DRHere() {
 			stopAtFloor(elev.Floor)
 			//Legge inn å sjekke for PR å åpne døra igjen?
@@ -141,8 +137,6 @@ func checkForJobsInDirection() {
 			elev.Direction = ED_Stop
 		}
 	default:
-		fmt.Println("Inside default case of checkforjobsindirection function")
-		os.Stdout.Sync()
 		if hasJobsWaiting() {
 			if DRHere() {
 				stopAtFloor(elev.Floor)

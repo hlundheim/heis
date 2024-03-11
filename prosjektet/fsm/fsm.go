@@ -15,7 +15,6 @@ func initBetweenFloors(drv_floors chan int) {
 	elev.Behavior = EB_Idle
 	elev.Direction = ED_Stop
 	elevio.SetMotorDirection(elevio.MD_Stop)
-	fmt.Println("NewFloor variable inside initbetween: ", newFloor)
 	elev.Floor = newFloor
 	elevio.SetFloorIndicator(newFloor)
 }
@@ -32,15 +31,7 @@ func initElev(numFloors int, drv_floors chan int) {
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		elev.Floor = floor
 		elevio.SetFloorIndicator(floor)
-		fmt.Println("End of initelev when init at floor")
-		fmt.Println("Elev behavior: ", elev.Behavior)
-		fmt.Println("Elev direction: ", elev.Direction)
-		fmt.Println("DR list: ", elev.DRList)
-		os.Stdout.Sync()
 	}
-	fmt.Println("return elev in init")
-	fmt.Println("Floor: ", elev.Floor)
-	os.Stdout.Sync()
 }
 
 func atFloorArrival(newFloor int) {
@@ -68,20 +59,12 @@ func atFloorArrival(newFloor int) {
 }
 
 func stopAtFloor(floor int) {
-	fmt.Println("Start of stopAtFloor")
-	os.Stdout.Sync()
 	elevio.SetMotorDirection(elevio.MD_Stop)
 	updateButtonLightsAndLists(floor)
 	elevio.SetDoorOpenLamp(true)
-	fmt.Println("DR List etter door open: ", elev.DRList)
-	os.Stdout.Sync()
 	elev.Behavior = EB_DoorOpen
-	fmt.Println("Right before timer in stopatfloor. Elev behavior: ", elev.Behavior)
-	os.Stdout.Sync()
 	time.Sleep(3 * time.Second) //endre til en timeout variabel
 	if elevio.GetObstruction() {
-		fmt.Println("Before for loop in obstr in stopatfloor")
-		time.Sleep(1 * time.Second)
 		for elevio.GetObstruction() {
 			elevio.SetDoorOpenLamp(true)
 			time.Sleep(100 * time.Millisecond)
@@ -124,11 +107,6 @@ func stopAtFloor(floor int) {
 			}
 		}
 		elevio.SetDoorOpenLamp(false)
-		fmt.Println("End of stopAtFloor")
-		fmt.Println("Elev behavior: ", elev.Behavior)
-		fmt.Println("Elev direction: ", elev.Direction)
-		fmt.Println("DR list: ", elev.DRList)
-		os.Stdout.Sync()
 		go checkForJobsInDirection()
 	}
 }
@@ -140,32 +118,20 @@ func handleButtonPress(button elevio.ButtonEvent) {
 		elev.DRList[button.Floor] = true
 		//kun skru på lampen om DR er bekreftet
 		elevio.SetButtonLamp(button.Button, button.Floor, true)
-		fmt.Println("Button pressed, DR List = ", elev.DRList)
-		os.Stdout.Sync()
 	case elevio.BT_HallDown:
 		//gjør til funksjon updatePRList()
 		elev.PRList[button.Floor][1] = true
 		elevio.SetButtonLamp(button.Button, button.Floor, true)
-		fmt.Println("Down button in hall pressed, PR List = ", elev.PRList)
-		os.Stdout.Sync()
 	case elevio.BT_HallUp:
 		//gjør til funksjon updatePRList()
 		elev.PRList[button.Floor][0] = true
 		elevio.SetButtonLamp(button.Button, button.Floor, true)
-		fmt.Println("Up button in hall pressed, PR List = ", elev.PRList)
-		os.Stdout.Sync()
 	}
 }
 
 func handleDefaultJobsWaiting() {
 	switch elev.Behavior {
 	case EB_Idle:
-		println("Inside idle case of default")
-		fmt.Println("Requests here: ", requestsHere())
-		fmt.Println("Requests above: ", requestsAbove())
-		fmt.Println("Requests below: ", requestsBelow())
-		time.Sleep(1 * time.Second)
-		os.Stdout.Sync()
 		if requestsHere() {
 			stopAtFloor(elev.Floor)
 		} else if requestsAbove() {
