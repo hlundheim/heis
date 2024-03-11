@@ -4,99 +4,66 @@ import (
 	"fmt"
 	"log"
 	"os"
-
-	//"strings"
-	//"bufio"
+	"strconv"
+	"reflect"
 	"encoding/json"
 	//provides buffered I/O. A teqnique that allows a program to read or write data in chuncks rather than one byte at a time. More effective and predictable.
 )
 
-func writeToFile(str string) {
 
-	var file *os.File // Declare a global variable to hold the file handle
-	//str is the string you want to write to a file
-
-	file, err := os.OpenFile("test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		log.Fatalf("failed opening file: %s", err)
-	}
-	defer file.Close() // Close the file when writeToFile function exits
-	//os.O_WRONLY: This flag indicates that the file should be opened for writing only.
-	//os.O_CREATE: This flag indicates that the file should be created if it doesn't exist.
-	//os.O_APPEND: This flag indicates that data should be appended to the end of the file.
-
-	/*0644: This is the file mode, which specifies the permissions to set for the file
-	when it's created. It's represented as an octal number. In this case,
-	0644 corresponds to read/write permissions for the owner of the file and read-only
-	permissions for others.*/
-
-	// Write the string to the file
-	len, err := file.WriteString(str + "\n")
-	if err != nil {
-		log.Fatalf("failed writing to file: %s", err)
-	}
-
-	fmt.Printf("Data written to file: %d bytes\n", len)
-
-	/*
-
-		if file == nil { // Check if the file is not already open
-			var err error
-			// Open the file for writing or create if it doesn't exist
-			file, err = os.OpenFile("test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-			if err != nil {
-				log.Fatalf("failed opening file: %s", err)
-			}
-		}
-
-		// Write the string to the file
-		len, err := file.WriteString("\n" + str + "\n")
-		if err != nil {
-			log.Fatalf("failed writing to file: %s", err)
-		}
-
-		fmt.Printf("Data written to file: %d bytes\n", len) */
-}
-
-func readFromFile() {
-	// Read the entire file content into a byte slice
-	data, err := os.ReadFile("test.txt")
-	if err != nil {
-		log.Fatalf("failed reading file: %s", err)
-	}
-
-	// Convert the byte slice to a string and print it
-	fmt.Println("File content:")
-	fmt.Println(string(data))
-
-}
-
-func DRReqToFile(values []bool) {
-	// Open the file for writing, create if it doesn't exist, truncate the file
+//funksjon som skriver til en fil
+func DRToFile(values []bool) {
 	file, err := os.Create("testBool.txt")
 	if err != nil {
 		log.Fatalf("failed opening file: %s", err)
 	}
 	defer file.Close() // Close the file when writeToFile function exits
-
+	
 	// Encode the boolean values as a JSON array
 	data, err := json.Marshal(values)
 	if err != nil {
 		log.Fatalf("failed encoding JSON: %s", err)
 	}
-
 	// Write the JSON data to the file
-	len, err := file.Write(data)
+	//len, err := file.Write(data)
+	_,err = file.Write(data)
 	if err != nil {
 		log.Fatalf("failed writing to file: %s", err)
 	}
-
-	fmt.Printf("Data written to file: %d bytes\n", len)
+	//fmt.Printf("Data written to file: %d bytes\n", len)
 }
 
-func DRreqReadFile() []bool {
+//funksjon som skriver til 3 filer
+func DRReqTo3Files(values []bool) {
+	// Open the file for writing, create if it doesn't exist, truncate the file
+	num := 3
+	for fileDR := 1; fileDR <= num;  fileDR++ {
+		file, err := os.Create("testBool.txt"+strconv.Itoa(fileDR))
+		if err != nil {
+			log.Fatalf("failed opening file: %s", err)
+		}
+		defer file.Close() // Close the file when writeToFile function exits
+	
+		// Encode the boolean values as a JSON array
+		data, err := json.Marshal(values)
+		if err != nil {
+			log.Fatalf("failed encoding JSON: %s", err)
+		}
+	
+		// Write the JSON data to the file
+		//len, err := file.Write(data)
+		_,err = file.Write(data)
+		if err != nil {
+			log.Fatalf("failed writing to file: %s", err)
+		}
+		//fmt.Printf("Data written to file: %d bytes\n", len)
+	}
+}
+
+func DRreqReadFile(filename string) []bool {
 	// Open the file for reading
-	file, err := os.Open("testBool.txt")
+	
+	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatalf("failed opening file: %s", err)
 	}
@@ -112,19 +79,36 @@ func DRreqReadFile() []bool {
 	return values
 }
 
+func CompareDR() []bool {
+	//num := 3
+	file1 := "testBool.txt1"
+	DR1 := DRreqReadFile(file1)
+	file2 := "testBool.txt2"
+    DR2 := DRreqReadFile(file2)
+	file3 := "testBool.txt3"
+    DR3 := DRreqReadFile(file3)
+	if reflect.DeepEqual(DR1,DR2) || reflect.DeepEqual(DR1,DR3){
+		fmt.Println(DR1)
+		return DR1
+	}else if reflect.DeepEqual(DR2,DR3){
+		fmt.Println(DR2)
+		return DR2
+	}else{
+		panic("None of the arrays are equal")
+	}
+}
+
+
+
+
 func main() {
-
-	/*
-		writeToFile("First line")
-		writeToFile("Second line")
-		writeToFile("Third line")
-
-		readFromFile()*/
-
 	boolVector := []bool{true, false, false, false}
-	DRReqToFile(boolVector)
+	DRReqTo3Files(boolVector)
+	//DRToFile(boolVector)
 
-	readValues := DRreqReadFile()
-	fmt.Println("Read from file:", readValues)
+	//readValues := DRreqReadFile("testBool.txt1")
+	//fmt.Println("Read from file:", readValues)
+
+	CompareDR()
 
 }

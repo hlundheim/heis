@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"runtime"
 )
+//endre variabelen
 
 // Struct members must be public in order to be accessible by json.Marshal/.Unmarshal
 // This means they must start with a capital letter, so we need to use field renaming struct tags to make them camelCase
@@ -21,6 +22,11 @@ type HRAInput struct {
 	HallRequests [][2]bool               `json:"hallRequests"`
 	States       map[string]HRAElevState `json:"states"`
 }
+
+
+//funksjoner som jeg tror kan være nyttige
+//må lage en funksjon som definerer mappet. 
+	//kanskje det kan ta inn et array med alle id-ene. Vet ikke hvor mange id-er det kommer til å være online
 
 func main() {
 
