@@ -132,6 +132,11 @@ func GetDoorOpenLight() bool {
 	return toBool(response[1])
 }
 
+func GetMotorDirection() MotorDirection {
+	response := read([4]byte{10, 0, 0, 0})
+	return MotorDirection(response[1])
+}
+
 func GetFloor() int {
 	a := read([4]byte{7, 0, 0, 0})
 	if a[1] != 0 {

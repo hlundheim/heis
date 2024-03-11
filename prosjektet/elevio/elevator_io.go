@@ -127,6 +127,16 @@ func GetButton(button ButtonType, floor int) bool {
 	return toBool(a[1])
 }
 
+func GetDoorOpenLight() bool {
+	response := read([4]byte{4, 0, 0, 0})
+	return toBool(response[1])
+}
+
+func GetMotorDirection() MotorDirection {
+	response := read([4]byte{10, 0, 0, 0})
+	return MotorDirection(response[1])
+}
+
 func GetFloor() int {
 	a := read([4]byte{7, 0, 0, 0})
 	if a[1] != 0 {
@@ -188,8 +198,4 @@ func toBool(a byte) bool {
 		b = true
 	}
 	return b
-}
-
-func Test() {
-	fmt.Print("aasrreat")
 }
