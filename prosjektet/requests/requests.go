@@ -1,6 +1,6 @@
 package requests
 
-func hasJobsWaiting() bool {
+func HasJobsWaiting() bool {
 	//risky å sette lik false her??
 	jobsWaiting := false
 	for i := 0; i < len(elev.DRList); i++ {
@@ -18,7 +18,7 @@ func hasJobsWaiting() bool {
 	return jobsWaiting
 }
 
-func requestsAbove() bool {
+func RequestsAbove() bool {
 	for i := elev.Floor + 1; i < numFloors; i++ {
 		if elev.DRList[i] {
 			return true
@@ -29,7 +29,7 @@ func requestsAbove() bool {
 	return false
 }
 
-func requestsBelow() bool {
+func RequestsBelow() bool {
 	for i := 0; i < elev.Floor; i++ {
 		if elev.DRList[i] {
 			return true
@@ -44,7 +44,7 @@ func DRHere() bool {
 	return elev.DRList[elev.Floor]
 }
 
-func requestsHere() bool {
+func RequestsHere() bool {
 	if elev.DRList[elev.Floor] {
 		return true
 	}
@@ -56,7 +56,7 @@ func requestsHere() bool {
 	return false
 }
 
-func updateButtonLightsAndLists(floor int) {
+func UpdateButtonLightsAndLists(floor int) {
 	elev.DRList[floor] = false
 	elevio.SetButtonLamp(elevio.BT_Cab, floor, false)
 	if floor == numFloors-1 || floor == 0 {
@@ -74,7 +74,7 @@ func updateButtonLightsAndLists(floor int) {
 			elev.PRList[floor][0] = false
 			elevio.SetButtonLamp(elevio.BT_HallUp, floor, false)
 			//fjerne den under?
-		} else if elev.PRList[floor][1] && !elev.PRList[floor][0] && !requestsAbove() {
+		} else if elev.PRList[floor][1] && !elev.PRList[floor][0] && !RequestsAbove() {
 			elev.PRList[floor][1] = false
 			elevio.SetButtonLamp(elevio.BT_HallDown, floor, false)
 			//endre heisretning?
@@ -88,7 +88,7 @@ func updateButtonLightsAndLists(floor int) {
 			elev.PRList[floor][1] = false
 			elevio.SetButtonLamp(elevio.BT_HallDown, floor, false)
 			//fjerne den under?
-		} else if elev.PRList[floor][0] && !elev.PRList[floor][1] && !requestsBelow() {
+		} else if elev.PRList[floor][0] && !elev.PRList[floor][1] && !RequestsBelow() {
 			elev.PRList[floor][0] = false
 			elevio.SetButtonLamp(elevio.BT_HallUp, floor, false)
 			//endre heisretning?
@@ -102,17 +102,17 @@ func updateButtonLightsAndLists(floor int) {
 	}
 }
 
-func checkForJobsInDirection() {
+func CheckForJobsInDirection() {
 	switch elev.Direction {
 	case ED_Up:
 		if DRHere() {
-			stopAtFloor(elev.Floor)
+			StopAtFloor(elev.Floor)
 			//Legge inn å sjekke for PR å åpne døra igjen?
-		} else if requestsAbove() {
+		} else if RequestsAbove() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Up
 			elevio.SetMotorDirection(elevio.MD_Up)
-		} else if requestsBelow() {
+		} else if RequestsBelow() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Down
 			elevio.SetMotorDirection(elevio.MD_Down)
@@ -122,13 +122,13 @@ func checkForJobsInDirection() {
 		}
 	case ED_Down:
 		if DRHere() {
-			stopAtFloor(elev.Floor)
+			StopAtFloor(elev.Floor)
 			//Legge inn å sjekke for PR å åpne døra igjen?
-		} else if requestsBelow() {
+		} else if RequestsBelow() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Down
 			elevio.SetMotorDirection(elevio.MD_Down)
-		} else if requestsAbove() {
+		} else if RequestsAbove() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Up
 			elevio.SetMotorDirection(elevio.MD_Up)
@@ -137,14 +137,14 @@ func checkForJobsInDirection() {
 			elev.Direction = ED_Stop
 		}
 	default:
-		if hasJobsWaiting() {
+		if HasJobsWaiting() {
 			if DRHere() {
-				stopAtFloor(elev.Floor)
-			} else if requestsAbove() {
+				StopAtFloor(elev.Floor)
+			} else if RequestsAbove() {
 				elev.Behavior = EB_Moving
 				elev.Direction = ED_Up
 				elevio.SetMotorDirection(elevio.MD_Up)
-			} else if requestsBelow() {
+			} else if RequestsBelow() {
 				elev.Behavior = EB_Moving
 				elev.Direction = ED_Down
 				elevio.SetMotorDirection(elevio.MD_Down)
