@@ -1,24 +1,30 @@
-package main
+package elder
 
 import (
 	"fmt"
+	"heis/PRAssigner"
+	"heis/elevator"
 	"heis/elevatorLifeStates"
 	"heis/network/bcast"
+	"time"
 )
 
 func RecieveElevInfo() {
 
 }
 
-func DistributePRs() {
-	//cost fns
+func DistributePRs(elevInfo elevator.Elevator) map[string][][]bool {
+	return PRAssigner.AssignPRs()
 }
 
-func SendPRs() {
-
+func SendPRs(elevInfo chan elevator.Elevator, distributedPRs chan map[string][][]bool) {
+	for {
+		fmt.Println("det skjer i elder")
+		distributedPRs <- DistributePRs(<-elevInfo)
+	}
 }
 
-func main() {
+func Initialize() {
 	liveElevUpdates := make(chan []string)
 	go elevatorLifeStates.Initialize(liveElevUpdates)
 	liveElevs := <-liveElevUpdates
@@ -29,16 +35,18 @@ func main() {
 		}
 		liveElevs = <-liveElevUpdates
 	}
-	port := 57000
-	elevInfo := make(chan Elevator)
-	distributedPRs := make(chan [][]bool)
+	port := 57001
+	elevInfo := make(chan elevator.Elevator)
+	distributedPRs := make(chan map[string][][]bool)
 
 	go bcast.Receiver(port, elevInfo)
-	go bcast.Transmitter(port, distributedPRs)
+	go bcast.Transmitter(port+1, distributedPRs)
+	go SendPRs(elevInfo, distributedPRs)
 
 	for {
-		distributedPRs <- DistributePRs(<-elevInfo)
-		fmt.Println(<-liveElevUpdates)
+		fmt.Println("elder: ", elevatorLifeStates.CheckIfElder(liveElevs))
+		time.Sleep(1 * time.Second)
+
 	}
 
 }

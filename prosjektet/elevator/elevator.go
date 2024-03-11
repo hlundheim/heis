@@ -28,8 +28,9 @@ type Elevator struct {
 }
 
 //elevator functions
+var numFloors = 4
 
-func createElev() Elevator {
+func CreateElev() Elevator {
 	elev := Elevator{}
 	elev.DRList = make([]bool, numFloors)
 	elev.PRList = make([][]bool, numFloors)

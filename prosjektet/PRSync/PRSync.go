@@ -1,4 +1,4 @@
-package main
+package PRSync
 
 import (
 	"fmt"
@@ -19,8 +19,8 @@ func SendPRCompletion(PRCompetion [][]bool, PRCompletions chan [][]bool) {
 	PRCompletions <- PRCompetion
 }
 
-func main() {
-	port := 57001
+func Initialize() {
+	port := 57004
 	//floors := 4
 	//PRs := genBlankPRs(floors)
 	newPRs := make(chan [][]bool)
@@ -43,4 +43,5 @@ func main() {
 			time.Sleep(1 * time.Second)
 		}
 	*/
+
 }

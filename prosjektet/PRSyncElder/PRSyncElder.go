@@ -1,7 +1,8 @@
-package main
+package PRSyncElder
 
 import (
 	"fmt"
+	"heis/elevatorLifeStates"
 	"heis/network/bcast"
 	"time"
 )
@@ -49,8 +50,18 @@ func BroadcastPRs(PRBroadcast chan [][]bool, PRUpdates chan [][]bool) {
 	}
 }
 
-func main() {
-	port := 57001
+func Initialize() {
+	liveElevUpdates := make(chan []string)
+	go elevatorLifeStates.Initialize(liveElevUpdates)
+	liveElevs := <-liveElevUpdates
+	for {
+		if elevatorLifeStates.CheckIfElder(liveElevs) {
+			fmt.Println("Du er elder")
+			break
+		}
+		liveElevs = <-liveElevUpdates
+	}
+	port := 57004
 	floors := 4
 	PRs := genBlankPRs(floors)
 	NewPRs := make(chan [][]bool)
