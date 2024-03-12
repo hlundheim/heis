@@ -386,7 +386,7 @@ func HandleButtonPress(button elevio.ButtonEvent) {
 }
 
 func UpdateAndBroadcastPRList(button elevio.ButtonEvent) {
-	broadcastPRList := make([][]bool, numFloors)
+	broadcastPRList := make([][]bool, numFloors) //kan settes til elev.PRList for å lage en kopi av den, da fjerne linjen under
 	GeneratePRArray(broadcastPRList)
 	switch button.Button {
 	case elevio.BT_HallDown:
