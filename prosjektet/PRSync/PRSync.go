@@ -1,13 +1,13 @@
 package PRSync
 
 import (
-	"fmt"
 	"heis/network/bcast"
+	"time"
 )
 
 func PRFetcher(updatedPRs chan [][]bool) {
 	for {
-		fmt.Println(<-updatedPRs)
+		//fmt.Println(<-updatedPRs)
 	}
 }
 
@@ -32,16 +32,14 @@ func Initialize() {
 	go bcast.Receiver(port+2, updatedPRs)
 	go PRFetcher(updatedPRs)
 
-	/*
-		for {
-			newPRs <- [][]bool{{false, false}, {false, false}, {false, true}, {false, false}}
-			PRCompletions <- [][]bool{{true, false}, {false, false}, {false, false}, {false, false}}
-			time.Sleep(1 * time.Second)
-			newPRs <- [][]bool{{true, false}, {false, false}, {false, false}, {false, false}}
-			PRCompletions <- [][]bool{{false, false}, {false, false}, {false, true}, {false, false}}
+	for {
+		newPRs <- [][]bool{{false, false}, {false, false}, {false, true}, {false, false}}
+		PRCompletions <- [][]bool{{true, false}, {false, false}, {false, false}, {false, false}}
+		time.Sleep(1 * time.Second)
+		newPRs <- [][]bool{{true, false}, {false, false}, {false, false}, {false, false}}
+		PRCompletions <- [][]bool{{false, false}, {false, false}, {false, true}, {false, false}}
 
-			time.Sleep(1 * time.Second)
-		}
-	*/
+		time.Sleep(1 * time.Second)
+	}
 
 }

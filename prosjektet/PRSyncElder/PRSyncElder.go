@@ -1,8 +1,6 @@
 package PRSyncElder
 
 import (
-	"fmt"
-	"heis/elevatorLifeStates"
 	"heis/network/bcast"
 	"time"
 )
@@ -15,20 +13,19 @@ func genBlankPRs(floors int) [][]bool {
 	return PRs
 }
 
-func UpdatePRs(PRs [][]bool, NewPRs chan [][]bool, PRCompletions chan [][]bool, UpdatedPRs chan [][]bool) {
+func UpdatePRs(PRs [][]bool, NewPRs chan [][]bool, PRCompletions chan [][]bool, UpdatedPRs chan [][]bool, UpdatedPRs2 chan [][]bool) {
 	for {
 		select {
 		case newPR := <-NewPRs:
-			fmt.Println("New before ", PRs)
+			//fmt.Println("New before ", PRs)
 			for floor := range PRs {
 				for direction := range PRs[floor] {
 					PRs[floor][direction] = PRs[floor][direction] || newPR[floor][direction]
 				}
 			}
-			fmt.Println("New after ", PRs)
-			UpdatedPRs <- PRs
+			//fmt.Println("New after ", PRs)
 		case PRCompletion := <-PRCompletions:
-			fmt.Println("Comp before ", PRs)
+			//fmt.Println("Comp before ", PRs)
 			for floor := range PRs {
 				for direction := range PRs[floor] {
 					if PRs[floor][direction] && PRCompletion[floor][direction] {
@@ -36,9 +33,10 @@ func UpdatePRs(PRs [][]bool, NewPRs chan [][]bool, PRCompletions chan [][]bool, 
 					}
 				}
 			}
-			UpdatedPRs <- PRs
-			fmt.Println("Comp after ", PRs)
+			//fmt.Println("Comp after ", PRs)
 		}
+		UpdatedPRs <- PRs
+		UpdatedPRs2 <- PRs
 	}
 }
 
@@ -50,16 +48,10 @@ func BroadcastPRs(PRBroadcast chan [][]bool, PRUpdates chan [][]bool) {
 	}
 }
 
-func Initialize() {
-	liveElevUpdates := make(chan []string)
-	go elevatorLifeStates.Initialize(liveElevUpdates)
-	liveElevs := <-liveElevUpdates
+func Initialize(PRUpdates2 chan [][]bool, elderActivator chan bool) {
 	for {
-		if elevatorLifeStates.CheckIfElder(liveElevs) {
-			fmt.Println("Du er elder")
-			break
-		}
-		liveElevs = <-liveElevUpdates
+		<-elderActivator
+		break
 	}
 	port := 57004
 	floors := 4
@@ -71,7 +63,7 @@ func Initialize() {
 
 	go bcast.Receiver(port, NewPRs)
 	go bcast.Receiver(port+1, PRCompletions)
-	go UpdatePRs(PRs, NewPRs, PRCompletions, PRUpdates)
+	go UpdatePRs(PRs, NewPRs, PRCompletions, PRUpdates, PRUpdates2)
 	go bcast.Transmitter(port+2, PRBroadcast)
 	go BroadcastPRs(PRBroadcast, PRUpdates)
 	/*

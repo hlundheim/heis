@@ -27,6 +27,11 @@ type Elevator struct {
 	//legge til PRlist?
 }
 
+type ElevPacket struct {
+	Birthday string
+	ElevInfo Elevator
+}
+
 //elevator functions
 var numFloors = 4
 
