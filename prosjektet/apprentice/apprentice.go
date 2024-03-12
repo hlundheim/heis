@@ -33,7 +33,4 @@ func Initialize(birthday string, recievedPRs chan [][2]bool) {
 	go updateReceivedPRs(localPRs, birthday, recievedPRs)
 	go sendElevInfo(elev, elevInfo)
 
-	for {
-		time.Sleep(1 * time.Millisecond)
-	}
 }
