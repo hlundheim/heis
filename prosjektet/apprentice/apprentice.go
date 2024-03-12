@@ -7,12 +7,11 @@ import (
 	"time"
 )
 
-var recievedPRs [][]bool
-
-func updateReceivedPRs(localPRs chan map[string][][]bool, birthday string) {
+func updateReceivedPRs(localPRs chan map[string][][2]bool, birthday string, recievedPRs chan [][2]bool) {
 	for {
-		recievedPRs = (<-localPRs)[birthday]
-		fmt.Println("apprentice: ", recievedPRs)
+		a := (<-localPRs)[birthday]
+		recievedPRs <- a
+		fmt.Println("apprentice: ", a)
 	}
 }
 
@@ -23,15 +22,15 @@ func sendElevInfo(ElevatorData elevator.ElevPacket, elevInfo chan elevator.ElevP
 	}
 }
 
-func Initialize(birthday string) {
+func Initialize(birthday string, recievedPRs chan [][2]bool) {
 	port := 57001
 	elev := elevator.ElevPacket{birthday, elevator.CreateElev()}
 	elevInfo := make(chan elevator.ElevPacket)
-	localPRs := make(chan map[string][][]bool)
+	localPRs := make(chan map[string][][2]bool)
 
 	go bcast.Transmitter(port, elevInfo)
 	go bcast.Receiver(port+1, localPRs)
-	go updateReceivedPRs(localPRs, birthday)
+	go updateReceivedPRs(localPRs, birthday, recievedPRs)
 	go sendElevInfo(elev, elevInfo)
 
 	for {

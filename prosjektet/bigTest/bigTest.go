@@ -1,8 +1,8 @@
-package main
+package bigTest
 
 import (
-	"Driver-go/elevio"
 	"fmt"
+	"heis/elevio"
 	"os"
 	"time"
 )
@@ -37,20 +37,20 @@ type Elevator struct {
 //variables
 
 var numFloors = 4
-var elev = createElev()
+var elev = CreateElev()
 
 //init
 
-func createElev() Elevator {
+func CreateElev() Elevator {
 	elev := Elevator{}
 	elev.DRList = make([]bool, numFloors)
 	elev.PRList = make([][2]bool, numFloors)
-	generateDRArray(numFloors, elev.DRList)
-	generatePRArray(elev.PRList)
+	GenerateDRArray(numFloors, elev.DRList)
+	GeneratePRArray(elev.PRList)
 	return elev
 }
 
-func generateDRArray(numFloors int, DRList []bool) []bool {
+func GenerateDRArray(numFloors int, DRList []bool) []bool {
 	for i := 0; i < numFloors; i++ {
 		DRList[i] = false
 	}
@@ -58,15 +58,15 @@ func generateDRArray(numFloors int, DRList []bool) []bool {
 	return DRList
 }
 
-func generatePRArray(PRList [][2]bool) [][2]bool {
+func GeneratePRArray(PRList [][2]bool) [][2]bool {
 	for i := range PRList {
-		PRList[i] = make([]bool, 2)
+		PRList[i] = [2]bool{}
 	}
 	//Dette erstattes ved å sette PRList lik PRList.txt når dette er implementert
 	return PRList
 }
 
-func initBetweenFloors(drv_floors chan int) {
+func InitBetweenFloors(drv_floors chan int) {
 	elev.Behavior = EB_Moving
 	elev.Direction = ED_Down
 	elevio.SetMotorDirection(elevio.MD_Down)
@@ -80,12 +80,12 @@ func initBetweenFloors(drv_floors chan int) {
 	elevio.SetFloorIndicator(newFloor)
 }
 
-func initElev(numFloors int, drv_floors chan int) {
+func InitElev(numFloors int, drv_floors chan int) {
 	floor := elevio.GetFloor()
 	fmt.Println("Init. floor: ", floor)
 	os.Stdout.Sync()
 	if floor == -1 {
-		initBetweenFloors(drv_floors)
+		InitBetweenFloors(drv_floors)
 	} else if floor != -1 {
 		elev.Behavior = EB_Idle
 		elev.Direction = ED_Stop
@@ -105,9 +105,9 @@ func initElev(numFloors int, drv_floors chan int) {
 
 //functions
 
-func atFloorArrival(newFloor int) {
+func AtFloorArrival(newFloor int, PRCompletions chan [][2]bool) {
 	if elev.DRList[newFloor] {
-		go stopAtFloor(newFloor)
+		go StopAtFloor(newFloor)
 	}
 	if newFloor != -1 {
 		elev.Floor = newFloor
@@ -116,20 +116,20 @@ func atFloorArrival(newFloor int) {
 	switch elev.Direction {
 	case ED_Up:
 		if elev.PRList[newFloor][0] {
-			go stopAtFloor(newFloor)
-		} else if !elev.PRList[newFloor][0] && elev.PRList[newFloor][1] && !requestsAbove() { //stopper for requests kun ned om ingenting over
-			go stopAtFloor(newFloor)
+			go StopAtFloor(newFloor)
+		} else if !elev.PRList[newFloor][0] && elev.PRList[newFloor][1] && !RequestsAbove() { //stopper for requests kun ned om ingenting over
+			go StopAtFloor(newFloor)
 		}
 	case ED_Down:
 		if elev.PRList[newFloor][1] {
-			go stopAtFloor(newFloor)
-		} else if !elev.PRList[newFloor][1] && elev.PRList[newFloor][0] && !requestsBelow() { //stopper for requests kun opp om ingenting under
-			go stopAtFloor(newFloor)
+			go StopAtFloor(newFloor)
+		} else if !elev.PRList[newFloor][1] && elev.PRList[newFloor][0] && !RequestsBelow() { //stopper for requests kun opp om ingenting under
+			go StopAtFloor(newFloor)
 		}
 	}
 }
 
-func updateButtonLightsAndLists(floor int) {
+func UpdateButtonLightsAndListsAtStop(floor int, PRCompletions chan [][2]bool) {
 	elev.DRList[floor] = false
 	elevio.SetButtonLamp(elevio.BT_Cab, floor, false)
 	if floor == numFloors-1 || floor == 0 {
@@ -147,7 +147,7 @@ func updateButtonLightsAndLists(floor int) {
 			elev.PRList[floor][0] = false
 			elevio.SetButtonLamp(elevio.BT_HallUp, floor, false)
 			//fjerne den under?
-		} else if elev.PRList[floor][1] && !elev.PRList[floor][0] && !requestsAbove() {
+		} else if elev.PRList[floor][1] && !elev.PRList[floor][0] && !RequestsAbove() {
 			elev.PRList[floor][1] = false
 			elevio.SetButtonLamp(elevio.BT_HallDown, floor, false)
 			//endre heisretning?
@@ -161,7 +161,7 @@ func updateButtonLightsAndLists(floor int) {
 			elev.PRList[floor][1] = false
 			elevio.SetButtonLamp(elevio.BT_HallDown, floor, false)
 			//fjerne den under?
-		} else if elev.PRList[floor][0] && !elev.PRList[floor][1] && !requestsBelow() {
+		} else if elev.PRList[floor][0] && !elev.PRList[floor][1] && !RequestsBelow() {
 			elev.PRList[floor][0] = false
 			elevio.SetButtonLamp(elevio.BT_HallUp, floor, false)
 			//endre heisretning?
@@ -175,11 +175,11 @@ func updateButtonLightsAndLists(floor int) {
 	}
 }
 
-func stopAtFloor(floor int) {
+func StopAtFloor(floor int, PRCompletions chan [][2]bool) {
 	fmt.Println("Start of stopAtFloor")
 	os.Stdout.Sync()
 	elevio.SetMotorDirection(elevio.MD_Stop)
-	updateButtonLightsAndLists(floor)
+	UpdateButtonLightsAndListsAtStop(floor)
 	elevio.SetDoorOpenLamp(true)
 	fmt.Println("DR List etter door open: ", elev.DRList)
 	os.Stdout.Sync()
@@ -197,14 +197,14 @@ func stopAtFloor(floor int) {
 		//check if there are DR or PR orders in the direction of PR, if not, the door should stay open three extra seconds
 		switch elev.Direction {
 		case ED_Up:
-			if elev.PRList[floor][1] && !elev.PRList[floor][0] && !requestsAbove() && elev.Floor != numFloors-1 {
+			if elev.PRList[floor][1] && !elev.PRList[floor][0] && !RequestsAbove() && elev.Floor != numFloors-1 {
 				elev.Direction = ED_Down
 				elev.PRList[floor][1] = false
 				elevio.SetButtonLamp(elevio.BT_HallDown, floor, false)
 				time.Sleep(3 * time.Second)
 			}
 		case ED_Down:
-			if elev.PRList[floor][0] && !elev.PRList[floor][1] && !requestsBelow() && elev.Floor != 0 {
+			if elev.PRList[floor][0] && !elev.PRList[floor][1] && !RequestsBelow() && elev.Floor != 0 {
 				elev.Direction = ED_Up
 				elev.PRList[floor][0] = false
 				elevio.SetButtonLamp(elevio.BT_HallUp, floor, false)
@@ -212,19 +212,19 @@ func stopAtFloor(floor int) {
 			}
 		}
 		elevio.SetDoorOpenLamp(false)
-		go checkForJobsInDirection()
+		go CheckForJobsInDirection()
 	} else {
 		//check if there are DR or PR orders in the direction of PR, if not, the door should stay open three extra seconds
 		switch elev.Direction {
 		case ED_Up:
-			if elev.PRList[floor][1] && !elev.PRList[floor][0] && !requestsAbove() && elev.Floor != numFloors-1 {
+			if elev.PRList[floor][1] && !elev.PRList[floor][0] && !RequestsAbove() && elev.Floor != numFloors-1 {
 				elev.Direction = ED_Down
 				elev.PRList[floor][1] = false
 				elevio.SetButtonLamp(elevio.BT_HallDown, floor, false)
 				time.Sleep(3 * time.Second)
 			}
 		case ED_Down:
-			if elev.PRList[floor][0] && !elev.PRList[floor][1] && !requestsBelow() && elev.Floor != 0 {
+			if elev.PRList[floor][0] && !elev.PRList[floor][1] && !RequestsBelow() && elev.Floor != 0 {
 				elev.Direction = ED_Up
 				elev.PRList[floor][0] = false
 				elevio.SetButtonLamp(elevio.BT_HallUp, floor, false)
@@ -237,23 +237,23 @@ func stopAtFloor(floor int) {
 		fmt.Println("Elev direction: ", elev.Direction)
 		fmt.Println("DR list: ", elev.DRList)
 		os.Stdout.Sync()
-		go checkForJobsInDirection()
+		go CheckForJobsInDirection()
 	}
 }
 
-func checkForJobsInDirection() {
+func CheckForJobsInDirection() {
 	switch elev.Direction {
 	case ED_Up:
 		fmt.Println("Inside ED_up case of checkforjobsindirection function")
 		os.Stdout.Sync()
 		if DRHere() {
-			stopAtFloor(elev.Floor)
+			StopAtFloor(elev.Floor)
 			//Legge inn å sjekke for PR å åpne døra igjen?
-		} else if requestsAbove() {
+		} else if RequestsAbove() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Up
 			elevio.SetMotorDirection(elevio.MD_Up)
-		} else if requestsBelow() {
+		} else if RequestsBelow() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Down
 			elevio.SetMotorDirection(elevio.MD_Down)
@@ -265,13 +265,13 @@ func checkForJobsInDirection() {
 		fmt.Println("Inside ED_down case of checkforjobsindirection function")
 		os.Stdout.Sync()
 		if DRHere() {
-			stopAtFloor(elev.Floor)
+			StopAtFloor(elev.Floor)
 			//Legge inn å sjekke for PR å åpne døra igjen?
-		} else if requestsBelow() {
+		} else if RequestsBelow() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Down
 			elevio.SetMotorDirection(elevio.MD_Down)
-		} else if requestsAbove() {
+		} else if RequestsAbove() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Up
 			elevio.SetMotorDirection(elevio.MD_Up)
@@ -282,14 +282,14 @@ func checkForJobsInDirection() {
 	default:
 		fmt.Println("Inside default case of checkforjobsindirection function")
 		os.Stdout.Sync()
-		if hasJobsWaiting() {
+		if HasJobsWaiting() {
 			if DRHere() {
-				stopAtFloor(elev.Floor)
-			} else if requestsAbove() {
+				StopAtFloor(elev.Floor)
+			} else if RequestsAbove() {
 				elev.Behavior = EB_Moving
 				elev.Direction = ED_Up
 				elevio.SetMotorDirection(elevio.MD_Up)
-			} else if requestsBelow() {
+			} else if RequestsBelow() {
 				elev.Behavior = EB_Moving
 				elev.Direction = ED_Down
 				elevio.SetMotorDirection(elevio.MD_Down)
@@ -304,7 +304,7 @@ func checkForJobsInDirection() {
 	}
 }
 
-func hasJobsWaiting() bool {
+func HasJobsWaiting() bool {
 	//risky å sette lik false her??
 	jobsWaiting := false
 	for i := 0; i < len(elev.DRList); i++ {
@@ -322,7 +322,7 @@ func hasJobsWaiting() bool {
 	return jobsWaiting
 }
 
-func requestsAbove() bool {
+func RequestsAbove() bool {
 	for i := elev.Floor + 1; i < numFloors; i++ {
 		if elev.DRList[i] {
 			return true
@@ -333,7 +333,7 @@ func requestsAbove() bool {
 	return false
 }
 
-func requestsBelow() bool {
+func RequestsBelow() bool {
 	for i := 0; i < elev.Floor; i++ {
 		if elev.DRList[i] {
 			return true
@@ -348,7 +348,7 @@ func DRHere() bool {
 	return elev.DRList[elev.Floor]
 }
 
-func requestsHere() bool {
+func RequestsHere() bool {
 	if elev.DRList[elev.Floor] {
 		return true
 	}
@@ -360,46 +360,82 @@ func requestsHere() bool {
 	return false
 }
 
-func handleButtonPress(button elevio.ButtonEvent) {
+func HandleButtonPress(button elevio.ButtonEvent, newPRs chan [][2]bool, recievedPRs chan [][2]bool) {
 	switch button.Button {
 	case elevio.BT_Cab:
-		//gjør til funksjon updateDRList()
 		elev.DRList[button.Floor] = true
-		//kun skru på lampen om DR er bekreftet
+		//kun skru på lampen om DR er bekreftet?
 		elevio.SetButtonLamp(button.Button, button.Floor, true)
 		fmt.Println("Button pressed, DR List = ", elev.DRList)
 		os.Stdout.Sync()
-	case elevio.BT_HallDown:
-		//gjør til funksjon updatePRList()
-		elev.PRList[button.Floor][1] = true
-		elevio.SetButtonLamp(button.Button, button.Floor, true)
-		fmt.Println("Down button in hall pressed, PR List = ", elev.PRList)
-		os.Stdout.Sync()
 	case elevio.BT_HallUp:
-		//gjør til funksjon updatePRList()
-		elev.PRList[button.Floor][0] = true
-		elevio.SetButtonLamp(button.Button, button.Floor, true)
-		fmt.Println("Up button in hall pressed, PR List = ", elev.PRList)
+		UpdateAndBroadcastPRList(button, newPRs)
+		ReceiveAndUpdatePRListFromElder(recievedPRs)
+		UpdateHallButtonLights()
+		fmt.Println("Button in hall pressed, PR List = ", elev.PRList)
 		os.Stdout.Sync()
+	case elevio.BT_HallDown:
+		UpdateAndBroadcastPRList(button, newPRs)
+		ReceiveAndUpdatePRListFromElder(recievedPRs)
+		UpdateHallButtonLights()
+		fmt.Println("Button in hall pressed, PR List = ", elev.PRList)
+		os.Stdout.Sync()
+	default:
+		break
 	}
 }
 
-func handleDefaultJobsWaiting() {
+func UpdateAndBroadcastPRList(button elevio.ButtonEvent, newPRs chan [][2]bool) {
+	broadcastPRList := make([][2]bool, numFloors) //kan settes til elev.PRList for å lage en kopi av den, da fjerne linjen under
+	GeneratePRArray(broadcastPRList)
+	switch button.Button {
+	case elevio.BT_HallDown:
+		broadcastPRList[button.Floor][1] = true
+		//Broadcast til Elder
+	case elevio.BT_HallUp:
+		broadcastPRList[button.Floor][0] = true
+		//Broadcast til ELder
+	}
+	fmt.Println("brpadcast liste: ", broadcastPRList)
+	newPRs <- broadcastPRList
+}
+
+func ReceiveAndUpdatePRListFromElder(recievedPRs chan [][2]bool) {
+	elev.PRList = <-recievedPRs
+	//om timeout: break
+}
+
+func UpdateHallButtonLights() {
+	for i := 0; i < len(elev.PRList); i++ {
+		if elev.PRList[i][0] {
+			elevio.SetButtonLamp(elevio.BT_HallUp, i, true)
+		} else if !elev.PRList[i][0] {
+			elevio.SetButtonLamp(elevio.BT_HallUp, i, false)
+		}
+		if elev.PRList[i][1] {
+			elevio.SetButtonLamp(elevio.BT_HallDown, i, true)
+		} else if !elev.PRList[i][0] {
+			elevio.SetButtonLamp(elevio.BT_HallDown, i, false)
+		}
+	}
+}
+
+func HandleDefaultJobsWaiting() {
 	switch elev.Behavior {
 	case EB_Idle:
 		println("Inside idle case of default")
-		fmt.Println("Requests here: ", requestsHere())
-		fmt.Println("Requests above: ", requestsAbove())
-		fmt.Println("Requests below: ", requestsBelow())
+		fmt.Println("Requests here: ", RequestsHere())
+		fmt.Println("Requests above: ", RequestsAbove())
+		fmt.Println("Requests below: ", RequestsBelow())
 		time.Sleep(1 * time.Second)
 		os.Stdout.Sync()
-		if requestsHere() {
-			stopAtFloor(elev.Floor)
-		} else if requestsAbove() {
+		if RequestsHere() {
+			StopAtFloor(elev.Floor)
+		} else if RequestsAbove() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Up
 			elevio.SetMotorDirection(elevio.MD_Up)
-		} else if requestsBelow() {
+		} else if RequestsBelow() {
 			elev.Behavior = EB_Moving
 			elev.Direction = ED_Down
 			elevio.SetMotorDirection(elevio.MD_Down)
@@ -409,7 +445,7 @@ func handleDefaultJobsWaiting() {
 	}
 }
 
-func main() {
+func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions chan [][2]bool) {
 
 	elevio.Init("localhost:15657", numFloors)
 
@@ -423,7 +459,7 @@ func main() {
 	go elevio.PollObstructionSwitch(drv_obstr)
 	go elevio.PollStopButton(drv_stop)
 
-	initElev(numFloors, drv_floors)
+	InitElev(numFloors, drv_floors)
 
 	fmt.Println("Elevator PRList: ", elev.PRList)
 	os.Stdout.Sync()
@@ -443,19 +479,19 @@ func main() {
 		select {
 		case button := <-drv_buttons:
 			fmt.Printf("%+v\n", button)
-			handleButtonPress(button)
+			HandleButtonPress(button, newPRs, recievedPRs)
 
 		case newFloor := <-drv_floors:
 			fmt.Printf("%+v\n", newFloor)
-			atFloorArrival(newFloor)
+			AtFloorArrival(newFloor, PRCompletions)
 
 		case stop := <-drv_stop:
 			//gjør ingenting per nå
 			fmt.Printf("%+v\n", stop)
 
 		default:
-			if hasJobsWaiting() {
-				handleDefaultJobsWaiting()
+			if HasJobsWaiting() {
+				HandleDefaultJobsWaiting()
 			}
 		}
 

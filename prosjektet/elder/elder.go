@@ -32,7 +32,7 @@ func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevUpdates chan 
 	}
 }
 
-func DistributePRs(distributedPRs chan map[string][][]bool, elevStates chan map[string]elevator.Elevator, PRUpdates2 chan [][]bool) {
+func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map[string]elevator.Elevator, PRUpdates2 chan [][2]bool) {
 	for {
 		a := PRAssigner.AssignPRs(<-elevStates, <-PRUpdates2)
 		fmt.Println("elder fordelt PR: ", a)
@@ -51,9 +51,9 @@ func Initialize() {
 	}
 	port := 57001
 	elevInfo := make(chan elevator.ElevPacket)
-	distributedPRs := make(chan map[string][][]bool)
+	distributedPRs := make(chan map[string][][2]bool)
 	elevStates := make(chan map[string]elevator.Elevator)
-	PRUpdates2 := make(chan [][]bool)
+	PRUpdates2 := make(chan [][2]bool)
 	elderActivator := make(chan bool)
 
 	go PRSyncElder.Initialize(PRUpdates2, elderActivator)

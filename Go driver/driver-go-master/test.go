@@ -30,7 +30,7 @@ type Elevator struct {
 	Floor     int
 	Direction ElevatorDirection
 	DRList    []bool
-	PRList    [][]bool
+	PRList    [][2]bool
 	//legge til PRlist?
 }
 
@@ -44,7 +44,7 @@ var elev = CreateElev()
 func CreateElev() Elevator {
 	elev := Elevator{}
 	elev.DRList = make([]bool, numFloors)
-	elev.PRList = make([][]bool, numFloors)
+	elev.PRList = make([][2]bool, numFloors)
 	GenerateDRArray(numFloors, elev.DRList)
 	GeneratePRArray(elev.PRList)
 	return elev
@@ -58,7 +58,7 @@ func GenerateDRArray(numFloors int, DRList []bool) []bool {
 	return DRList
 }
 
-func GeneratePRArray(PRList [][]bool) [][]bool {
+func GeneratePRArray(PRList [][2]bool) [][2]bool {
 	for i := range PRList {
 		PRList[i] = make([]bool, 2)
 	}
@@ -386,7 +386,7 @@ func HandleButtonPress(button elevio.ButtonEvent) {
 }
 
 func UpdateAndBroadcastPRList(button elevio.ButtonEvent) {
-	broadcastPRList := make([][]bool, numFloors) //kan settes til elev.PRList for å lage en kopi av den, da fjerne linjen under
+	broadcastPRList := make([][2]bool, numFloors) //kan settes til elev.PRList for å lage en kopi av den, da fjerne linjen under
 	GeneratePRArray(broadcastPRList)
 	switch button.Button {
 	case elevio.BT_HallDown:
@@ -457,7 +457,7 @@ func main() {
 	go elevio.PollObstructionSwitch(drv_obstr)
 	go elevio.PollStopButton(drv_stop)
 
-	initElev(numFloors, drv_floors)
+	InitElev(numFloors, drv_floors)
 
 	fmt.Println("Elevator PRList: ", elev.PRList)
 	os.Stdout.Sync()

@@ -23,7 +23,7 @@ type Elevator struct {
 	Floor     int
 	Direction ElevatorDirection
 	DRList    []bool
-	PRList    [][]bool
+	PRList    [][2]bool
 	//legge til PRlist?
 }
 
@@ -32,13 +32,13 @@ type ElevPacket struct {
 	ElevInfo Elevator
 }
 
-//elevator functions
+// elevator functions
 var numFloors = 4
 
 func CreateElev() Elevator {
 	elev := Elevator{}
 	elev.DRList = make([]bool, numFloors)
-	elev.PRList = make([][]bool, numFloors)
+	elev.PRList = make([][2]bool, numFloors)
 	GenerateDRArray(numFloors, elev.DRList)
 	GeneratePRArray(elev.PRList)
 	return elev
@@ -52,9 +52,9 @@ func GenerateDRArray(numFloors int, DRList []bool) []bool {
 	return DRList
 }
 
-func GeneratePRArray(PRList [][]bool) [][]bool {
+func GeneratePRArray(PRList [][2]bool) [][2]bool {
 	for i := range PRList {
-		PRList[i] = make([]bool, 2)
+		PRList[i] = [2]bool{}
 	}
 	//Dette erstattes ved å sette PRList lik PRList.txt når dette er implementert
 	return PRList

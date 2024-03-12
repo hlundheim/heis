@@ -19,7 +19,7 @@ type HRAElevState struct {
 }
 
 type HRAInput struct {
-	HallRequests [][]bool                `json:"hallRequests"`
+	HallRequests [][2]bool               `json:"hallRequests"`
 	States       map[string]HRAElevState `json:"states"`
 }
 
@@ -53,7 +53,7 @@ func JSONFormatState(elevState elevator.Elevator) HRAElevState {
 	return state
 }
 
-func AssignPRs(elevStates map[string]elevator.Elevator, PRs [][]bool) map[string][][]bool {
+func AssignPRs(elevStates map[string]elevator.Elevator, PRs [][2]bool) map[string][][2]bool {
 
 	hraExecutable := ""
 	switch runtime.GOOS {
@@ -70,7 +70,7 @@ func AssignPRs(elevStates map[string]elevator.Elevator, PRs [][]bool) map[string
 	}
 	/*
 		input := HRAInput{
-			HallRequests: [][]bool{{false, false}, {true, false}, {false, false}, {false, true}},
+			HallRequests: [][2]bool{{false, false}, {true, false}, {false, false}, {false, true}},
 			States: map[string]HRAElevState{
 				"one": HRAElevState{
 					Behavior:    "moving",
@@ -100,7 +100,7 @@ func AssignPRs(elevStates map[string]elevator.Elevator, PRs [][]bool) map[string
 		fmt.Println(string(ret))
 	}
 
-	output := new(map[string][][]bool)
+	output := new(map[string][][2]bool)
 	err = json.Unmarshal(ret, &output)
 	if err != nil {
 		fmt.Println("json.Unmarshal error: ", err)
