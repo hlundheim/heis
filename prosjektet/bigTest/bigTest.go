@@ -381,12 +381,10 @@ func HandleButtonPress(button elevio.ButtonEvent, newPRs chan [][2]bool) {
 		os.Stdout.Sync()
 	case elevio.BT_HallUp:
 		UpdateAndBroadcastPRList(button, newPRs)
-		UpdateHallButtonLights()
 		fmt.Println("Button in hall pressed, PR List = ", elev.PRList)
 		os.Stdout.Sync()
 	case elevio.BT_HallDown:
 		UpdateAndBroadcastPRList(button, newPRs)
-		UpdateHallButtonLights()
 		fmt.Println("Button in hall pressed, PR List = ", elev.PRList)
 		os.Stdout.Sync()
 	default:
@@ -414,18 +412,10 @@ func ReceiveAndUpdatePRListFromElder(recievedPRs [][2]bool) {
 	//om timeout: break
 }
 
-func UpdateHallButtonLights() {
-	for i := 0; i < len(elev.PRList); i++ {
-		if elev.PRList[i][0] {
-			elevio.SetButtonLamp(elevio.BT_HallUp, i, true)
-		} else if !elev.PRList[i][0] {
-			elevio.SetButtonLamp(elevio.BT_HallUp, i, false)
-		}
-		if elev.PRList[i][1] {
-			elevio.SetButtonLamp(elevio.BT_HallDown, i, true)
-		} else if !elev.PRList[i][0] {
-			elevio.SetButtonLamp(elevio.BT_HallDown, i, false)
-		}
+func UpdateHallButtonLights(PRs [][2]bool) {
+	for i,v:= range PRs {
+		elevio.SetButtonLamp(elevio.BT_HallUp,i,v[0])
+		elevio.SetButtonLamp(elevio.BT_HallDown,i,v[1])
 	}
 }
 
@@ -454,7 +444,7 @@ func HandleDefaultJobsWaiting(PRCompletions chan [][2]bool) {
 	}
 }
 
-func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions chan [][2]bool) {
+func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions chan [][2]bool, globalPRs chan [][2]bool) {
 
 	elevio.Init("localhost:15657", numFloors)
 
@@ -500,6 +490,9 @@ func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions
 
 		case PR := <-recievedPRs:
 			ReceiveAndUpdatePRListFromElder(PR)
+		
+		case PRs := <- globalPRs:
+			UpdateHallButtonLights(PRs)
 
 		default:
 			if HasJobsWaiting() {

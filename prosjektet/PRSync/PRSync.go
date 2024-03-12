@@ -2,13 +2,11 @@ package PRSync
 
 import (
 	"heis/network/bcast"
-	"time"
 )
 
-func PRFetcher(updatedPRs chan [][2]bool) {
+func PRFetcher(updatedPRs chan [][2]bool, globalPRs chan [][2]bool){
 	for {
-		//fmt.Println(<-updatedPRs)
-		time.Sleep(time.Second)
+		globalPRs <- <- updatedPRs
 	}
 }
 
@@ -20,7 +18,7 @@ func SendPRCompletion(PRCompetion [][2]bool, PRCompletions chan [][2]bool) {
 	PRCompletions <- PRCompetion
 }
 
-func Initialize(newPRs chan [][2]bool, PRCompletions chan [][2]bool) {
+func Initialize(newPRs chan [][2]bool, PRCompletions chan [][2]bool, globalPRs chan [][2]bool) {
 	port := 57004
 	//floors := 4
 	//PRs := genBlankPRs(floors)
@@ -29,7 +27,7 @@ func Initialize(newPRs chan [][2]bool, PRCompletions chan [][2]bool) {
 	go bcast.Transmitter(port, newPRs)
 	go bcast.Transmitter(port+1, PRCompletions)
 	go bcast.Receiver(port+2, updatedPRs)
-	go PRFetcher(updatedPRs)
+	go PRFetcher(updatedPRs, globalPRs)
 
 	/*
 		for {
