@@ -4,33 +4,33 @@ import (
 	"fmt"
 	"heis/elevator"
 	"heis/network/bcast"
-	"time"
 )
 
-func updateReceivedPRs(localPRs chan map[string][][2]bool, birthday string, recievedPRs chan [][2]bool) {
+func updateReceivedPRs(distributedPRs chan map[string][][2]bool, birthday string, recievedPRs chan [][2]bool) {
 	for {
-		a := (<-localPRs)[birthday]
+		a := (<-distributedPRs)[birthday]
 		recievedPRs <- a
 		fmt.Println("apprentice: ", a)
 	}
 }
 
-func sendElevInfo(ElevatorData elevator.ElevPacket, elevInfo chan elevator.ElevPacket) {
+func sendElevInfo(birthday string, elevState chan elevator.Elevator, elevInfo chan elevator.ElevPacket) {
 	for {
-		elevInfo <- ElevatorData
-		time.Sleep(500 * time.Millisecond)
+		elevInfo <- elevator.ElevPacket{birthday, <-elevState}
 	}
 }
 
-func Initialize(birthday string, recievedPRs chan [][2]bool) {
+func Initialize(birthday string, recievedPRs chan [][2]bool, newPRs chan [][2]bool, PRCompletions chan [][2]bool, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
 	port := 57001
-	elev := elevator.ElevPacket{birthday, elevator.CreateElev()}
 	elevInfo := make(chan elevator.ElevPacket)
-	localPRs := make(chan map[string][][2]bool)
+	distributedPRs := make(chan map[string][][2]bool)
 
 	go bcast.Transmitter(port, elevInfo)
-	go bcast.Receiver(port+1, localPRs)
-	go updateReceivedPRs(localPRs, birthday, recievedPRs)
-	go sendElevInfo(elev, elevInfo)
-
+	go bcast.Receiver(port+1, distributedPRs)
+	go bcast.Transmitter(port+2, newPRs)
+	go bcast.Transmitter(port+3, PRCompletions)
+	go bcast.Receiver(port+4, globalPRs)
+	go updateReceivedPRs(distributedPRs, birthday, recievedPRs)
+	go sendElevInfo(birthday, elevState, elevInfo)
+	fmt.Println("apprentice init")
 }

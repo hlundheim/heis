@@ -4,41 +4,18 @@ import (
 	"heis/network/bcast"
 )
 
-func PRFetcher(updatedPRs chan [][2]bool, globalPRs chan [][2]bool){
+func PRFetcher(updatedPRs chan [][2]bool, globalPRs chan [][2]bool) {
 	for {
-		globalPRs <- <- updatedPRs
+		globalPRs <- <-updatedPRs
 	}
 }
 
-func SendNewPR(PR [][2]bool, newPRs chan [][2]bool) {
-	newPRs <- PR
-}
-
-func SendPRCompletion(PRCompetion [][2]bool, PRCompletions chan [][2]bool) {
-	PRCompletions <- PRCompetion
-}
-
-func Initialize(newPRs chan [][2]bool, PRCompletions chan [][2]bool, globalPRs chan [][2]bool) {
-	port := 57004
+func Initialize(globalPRs chan [][2]bool) {
+	port := 57003
 	//floors := 4
 	//PRs := genBlankPRs(floors)
 	updatedPRs := make(chan [][2]bool)
 
-	go bcast.Transmitter(port, newPRs)
-	go bcast.Transmitter(port+1, PRCompletions)
 	go bcast.Receiver(port+2, updatedPRs)
 	go PRFetcher(updatedPRs, globalPRs)
-
-	/*
-		for {
-			newPRs <- [][2]bool{{false, false}, {false, false}, {false, true}, {false, false}}
-			PRCompletions <- [][2]bool{{true, false}, {false, false}, {false, false}, {false, false}}
-			time.Sleep(1 * time.Second)
-			newPRs <- [][2]bool{{true, false}, {false, false}, {false, false}, {false, false}}
-			PRCompletions <- [][2]bool{{false, false}, {false, false}, {false, true}, {false, false}}
-
-			time.Sleep(1 * time.Second)
-		}
-	*/
-
 }

@@ -1,10 +1,11 @@
 package main
 
 import (
-	"heis/PRSync"
+	"fmt"
 	"heis/apprentice"
+	"heis/apprentice2"
 	"heis/bigTest"
-	"heis/elder"
+	"heis/elevator"
 	"heis/elevatorLifeStates"
 	"time"
 )
@@ -14,11 +15,14 @@ func main() {
 	recievedPRs := make(chan [][2]bool)
 	PRCompletions := make(chan [][2]bool)
 	globalPRs := make(chan [][2]bool)
-	elder.Initialize()
-	apprentice.Initialize(elevatorLifeStates.LocalBirthday, recievedPRs)
-	PRSync.Initialize(newPRs, PRCompletions, globalPRs)
-	go bigTest.Initialize(newPRs, recievedPRs, PRCompletions, globalPRs)
-	//go PRSyncElder.Initialize()
+	elevState := make(chan elevator.Elevator)
+	fmt.Println("hø")
+	go apprentice2.Initialize()
+	fmt.Println("app 2")
+	apprentice.Initialize(elevatorLifeStates.LocalBirthday, recievedPRs, newPRs, PRCompletions, globalPRs, elevState)
+	fmt.Println("app 1")
+	go bigTest.Initialize(newPRs, recievedPRs, PRCompletions, globalPRs, elevState)
+	fmt.Println("heis")
 	for {
 		time.Sleep(1 * time.Second)
 	}

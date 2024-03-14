@@ -8,32 +8,28 @@ import (
 	"runtime"
 )
 
-// Struct members must be public in order to be accessible by json.Marshal/.Unmarshal
-// This means they must start with a capital letter, so we need to use field renaming struct tags to make them camelCase
-
-type HRAElevState struct {
-	Behavior    string `json:"behaviour"`
-	Floor       int    `json:"floor"`
-	Direction   string `json:"direction"`
-	CabRequests []bool `json:"cabRequests"`
+type PRAElevState struct {
+	Behavior  string `json:"behaviour"`
+	Floor     int    `json:"floor"`
+	Direction string `json:"direction"`
+	DRs       []bool `json:"cabRequests"`
 }
 
-type HRAInput struct {
-	HallRequests [][2]bool               `json:"hallRequests"`
-	States       map[string]HRAElevState `json:"states"`
+type PRAInput struct {
+	PRs    [][2]bool               `json:"hallRequests"`
+	States map[string]PRAElevState `json:"states"`
 }
 
-// Helt forjævlig vær så snill fiks dette fremtidige håvard
-func JSONFormatter(elevState map[string]elevator.Elevator) map[string]HRAElevState {
-	JSONmap := make(map[string]HRAElevState)
+func PRAFormatMap(elevState map[string]elevator.Elevator) map[string]PRAElevState {
+	PRAmap := make(map[string]PRAElevState)
 	for birthday, state := range elevState {
-		JSONmap[birthday] = JSONFormatState(state)
+		PRAmap[birthday] = PRAFormatState(state)
 	}
-	return JSONmap
+	return PRAmap
 }
 
-func JSONFormatState(elevState elevator.Elevator) HRAElevState {
-	state := HRAElevState{}
+func PRAFormatState(elevState elevator.Elevator) PRAElevState {
+	state := PRAElevState{}
 	if elevState.Behavior == 0 {
 		state.Behavior = "idle"
 	} else if elevState.Behavior == 1 {
@@ -49,52 +45,32 @@ func JSONFormatState(elevState elevator.Elevator) HRAElevState {
 	} else if elevState.Behavior == 1 {
 		state.Direction = "up"
 	}
-	state.CabRequests = elevState.DRList
+	state.DRs = elevState.DRList
 	return state
 }
 
 func AssignPRs(elevStates map[string]elevator.Elevator, PRs [][2]bool) map[string][][2]bool {
 
-	hraExecutable := ""
+	praExecutable := ""
 	switch runtime.GOOS {
 	case "linux":
-		hraExecutable = "hall_request_assigner"
+		praExecutable = "hall_request_assigner"
 	case "windows":
-		hraExecutable = "hall_request_assigner.exe"
+		praExecutable = "hall_request_assigner.exe"
 	default:
 		panic("OS not supported")
 	}
-	input := HRAInput{
-		HallRequests: PRs,
-		States:       JSONFormatter(elevStates),
+	input := PRAInput{
+		PRs:    PRs,
+		States: PRAFormatMap(elevStates),
 	}
-	/*
-		input := HRAInput{
-			HallRequests: [][2]bool{{false, false}, {true, false}, {false, false}, {false, true}},
-			States: map[string]HRAElevState{
-				"one": HRAElevState{
-					Behavior:    "moving",
-					Floor:       2,
-					Direction:   "up",
-					CabRequests: []bool{false, false, false, true},
-				},
-				"two": HRAElevState{
-					Behavior:    "idle",
-					Floor:       0,
-					Direction:   "stop",
-					CabRequests: []bool{false, false, false, false},
-				},
-			},
-		}
-	*/
 
 	jsonBytes, err := json.Marshal(input)
 	if err != nil {
 		fmt.Println("json.Marshal error: ", err)
 	}
 
-	//ret, err := exec.Command("../hall_request_assigner/"+hraExecutable, "-i", string(jsonBytes)).CombinedOutput()
-	ret, err := exec.Command("./"+hraExecutable, "-i", string(jsonBytes)).CombinedOutput()
+	ret, err := exec.Command("./PRAssigner/"+praExecutable, "-i", string(jsonBytes)).CombinedOutput()
 	if err != nil {
 		fmt.Println("exec.Command error: ", err)
 		fmt.Println(string(ret))

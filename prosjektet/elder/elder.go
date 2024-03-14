@@ -5,9 +5,23 @@ import (
 	"heis/PRAssigner"
 	"heis/PRSyncElder"
 	"heis/elevator"
-	"heis/elevatorLifeStates"
 	"heis/network/bcast"
 )
+
+func removeDiscElevs(states map[string]elevator.Elevator, liveElevs []string) map[string]elevator.Elevator {
+	for Birthday := range states {
+		flag := false
+		for _, birthday := range liveElevs {
+			if Birthday == birthday {
+				flag = true
+			}
+		}
+		if !flag {
+			delete(states, Birthday)
+		}
+	}
+	return states
+}
 
 func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevUpdates chan []string, elevStates chan map[string]elevator.Elevator) {
 	states := make(map[string]elevator.Elevator)
@@ -16,17 +30,8 @@ func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevUpdates chan 
 		case currentInfo := <-elevInfo:
 			states[currentInfo.Birthday] = currentInfo.ElevInfo
 		case liveElevs := <-liveElevUpdates:
-			for Birthday := range states {
-				flag := false
-				for _, birthday := range liveElevs {
-					if Birthday == birthday {
-						flag = true
-					}
-				}
-				if !flag {
-					delete(states, Birthday)
-				}
-			}
+			//fjerner som referanse pga map lock
+			states = removeDiscElevs(states, liveElevs)
 		}
 		elevStates <- states
 	}
@@ -40,24 +45,14 @@ func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map
 	}
 }
 
-func Initialize() {
-	liveElevUpdates := make(chan []string)
-	go elevatorLifeStates.Initialize(liveElevUpdates)
-	for {
-		if elevatorLifeStates.CheckIfElder(<-liveElevUpdates) {
-			fmt.Println("Du er elder")
-			break
-		}
-	}
+func Initialize(liveElevUpdates chan []string, PRs [][2]bool) {
 	port := 57001
 	elevInfo := make(chan elevator.ElevPacket)
 	distributedPRs := make(chan map[string][][2]bool)
 	elevStates := make(chan map[string]elevator.Elevator)
 	PRUpdates2 := make(chan [][2]bool)
-	elderActivator := make(chan bool)
 
-	go PRSyncElder.Initialize(PRUpdates2, elderActivator)
-	elderActivator <- true
+	go PRSyncElder.Initialize(PRUpdates2, PRs)
 	go bcast.Receiver(port, elevInfo)
 	go bcast.Transmitter(port+1, distributedPRs)
 	go DistributePRs(distributedPRs, elevStates, PRUpdates2)
