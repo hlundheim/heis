@@ -396,7 +396,7 @@ func HandleDefaultJobsWaiting(PRCompletions chan [][2]bool) {
 
 func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions chan [][2]bool, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
 
-	elevio.Init("localhost:23001", numFloors)
+	elevio.Init("localhost:23000", numFloors)
 
 	drv_buttons := make(chan elevio.ButtonEvent)
 	drv_floors := make(chan int)
