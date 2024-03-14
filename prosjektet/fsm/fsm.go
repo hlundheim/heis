@@ -37,7 +37,7 @@ func atFloorArrival(PRCompletions chan [][2]bool, elevState chan elevator.Elevat
 	} else if elev.Floor == 0 {
 		elev.Direction = elevator.ED_Up
 	}
-	elevState <- elev
+	//elevState <- elev
 	switch elev.Behavior {
 	case elevator.EB_Moving:
 		if requestsShouldStop() {
@@ -266,7 +266,7 @@ func buttonHandling(newPRs chan [][2]bool, elevState chan elevator.Elevator) {
 	for {
 		button := <-drv_buttons
 		handleButtonPress(button, newPRs)
-		elevState <- elev
+		//elevState <- elev
 	}
 }
 
@@ -292,6 +292,17 @@ func handlePR(recievedPRs chan [][2]bool, globalPRs chan [][2]bool) {
 	}
 }
 
+func detectElevStateChange(elevState chan elevator.Elevator) {
+	//currentElevState := elev
+	for {
+		time.Sleep(100 * time.Millisecond)
+		elevState <- elev
+		// if elev != currentElevState {
+		// }
+	}
+
+}
+
 func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions chan [][2]bool, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
 
 	elevio.Init("localhost:15657", numFloors)
@@ -306,6 +317,7 @@ func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions
 	go elevio.PollObstructionSwitch(drv_obstr)
 	go handlePR(recievedPRs, globalPRs)
 	go handleJobsWaiting(PRCompletions)
+	go detectElevStateChange(elevState)
 
 	//code for testing purposes
 	for f := 0; f < numFloors; f++ {
@@ -316,6 +328,7 @@ func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions
 	elevio.SetDoorOpenLamp(false)
 	//end of code for testing purposes
 
-	elevState <- elev
+	//Denne er faktisk ganske viktig faktisk faktisk
+	//elevState <- elev
 	fmt.Println("Elev initialized")
 }

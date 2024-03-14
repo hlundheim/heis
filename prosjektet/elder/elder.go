@@ -47,7 +47,11 @@ func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevs chan []stri
 
 func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map[string]elevator.Elevator, PRUpdates2 chan [][2]bool) {
 	for {
-		a := PRAssigner.AssignPRs(<-elevStates, <-PRUpdates2)
+		b := <-elevStates
+		var a map[string][][2]bool
+		if len(b) > 1 {
+			a = PRAssigner.AssignPRs(b, <-PRUpdates2)
+		}
 		fmt.Println("elder fordelt PR: ", a)
 		distributedPRs <- a
 		// a := <-elevStates
