@@ -84,11 +84,13 @@ func UpdateButtonLightsAndListsAtStop(floor int, PRCompletions chan [][2]bool) {
 	elev.DRList[floor] = false
 	elevio.SetButtonLamp(elevio.BT_Cab, floor, false)
 	if floor == numFloors-1 {
+		elev.Direction = elevator.ED_Down
 		PRCompletionList[floor][1] = true
 		PRCompletions <- PRCompletionList
 		//elevio.SetButtonLamp(elevio.BT_HallUp, floor, false)
 		//elevio.SetButtonLamp(elevio.BT_HallDown, floor, false)
 	} else if floor == 0 {
+		elev.Direction = elevator.ED_Up
 		PRCompletionList[floor][0] = true
 		PRCompletions <- PRCompletionList
 	} else {
@@ -224,7 +226,7 @@ func CheckForJobsInDirection(PRCompletions chan [][2]bool) {
 	case elevator.ED_Down:
 		//fmt.Println("Inside elevator.ED_down case of checkforjobsindirection function")
 		//fmt.Println("Elevators PRList: ", elev.PRList)
-		os.Stdout.Sync()
+		//os.Stdout.Sync()
 		if DRHere() {
 			go StopAtFloor(elev.Floor, PRCompletions)
 			//Legge inn å sjekke for PR å åpne døra igjen?
