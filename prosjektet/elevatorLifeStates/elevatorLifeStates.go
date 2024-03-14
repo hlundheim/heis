@@ -15,7 +15,9 @@ func UpdateHandler(elevUpdates chan peers.PeerUpdate, liveElevUpdates chan []str
 		fmt.Println("live elevs: %s  ", update.Peers)
 		fmt.Println("new elevs: %s  ", update.New)
 		fmt.Println("lost elevs: %s  ", update.Lost)
-		liveElevUpdates <- sortElevsByAge(update.Peers)
+		liveElevUpdates <- update.Peers
+		liveElevUpdates <- update.Peers
+		liveElevUpdates <- update.Peers
 	}
 }
 

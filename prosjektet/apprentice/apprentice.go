@@ -32,5 +32,4 @@ func Initialize(birthday string, recievedPRs chan [][2]bool, newPRs chan [][2]bo
 	go bcast.Receiver(port+4, globalPRs)
 	go updateReceivedPRs(distributedPRs, birthday, recievedPRs)
 	go sendElevInfo(birthday, elevState, elevInfo)
-	fmt.Println("apprentice init")
 }

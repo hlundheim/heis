@@ -8,8 +8,8 @@ import (
 	"heis/network/bcast"
 )
 
-func removeDiscElevs(states map[string]elevator.Elevator, liveElevs []string) map[string]elevator.Elevator {
-	for Birthday := range states {
+func removeDiscElevs(states *map[string]elevator.Elevator, liveElevs []string) map[string]elevator.Elevator {
+	for Birthday := range *states {
 		flag := false
 		for _, birthday := range liveElevs {
 			if Birthday == birthday {
@@ -17,10 +17,10 @@ func removeDiscElevs(states map[string]elevator.Elevator, liveElevs []string) ma
 			}
 		}
 		if !flag {
-			delete(states, Birthday)
+			delete(*states, Birthday)
 		}
 	}
-	return states
+	return *states
 }
 
 func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevUpdates chan []string, elevStates chan map[string]elevator.Elevator) {
@@ -31,7 +31,8 @@ func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevUpdates chan 
 			states[currentInfo.Birthday] = currentInfo.ElevInfo
 		case liveElevs := <-liveElevUpdates:
 			//fjerner som referanse pga map lock
-			states = removeDiscElevs(states, liveElevs)
+			fmt.Println(liveElevs)
+			removeDiscElevs(&states, liveElevs)
 		}
 		elevStates <- states
 	}

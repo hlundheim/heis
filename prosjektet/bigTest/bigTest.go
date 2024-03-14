@@ -372,6 +372,7 @@ func HandleDefaultJobsWaiting(PRCompletions chan [][2]bool) {
 	switch elev.Behavior {
 	case elevator.EB_Idle:
 		println("Inside idle case of default")
+		time.Sleep(100 * time.Millisecond)
 		//fmt.Println("Requests here: ", RequestsHere())
 		//fmt.Println("Requests above: ", RequestsAbove())
 		//fmt.Println("Requests below: ", RequestsBelow())
@@ -395,7 +396,7 @@ func HandleDefaultJobsWaiting(PRCompletions chan [][2]bool) {
 
 func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions chan [][2]bool, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
 
-	elevio.Init("localhost:15657", numFloors)
+	elevio.Init("localhost:23001", numFloors)
 
 	drv_buttons := make(chan elevio.ButtonEvent)
 	drv_floors := make(chan int)
