@@ -40,9 +40,9 @@ func PRAFormatState(elevState elevator.Elevator) PRAElevState {
 	state.Floor = elevState.Floor
 	if elevState.Direction == 1 {
 		state.Direction = "down"
-	} else if elevState.Behavior == 2 {
+	} else if elevState.Direction == 2 {
 		state.Direction = "stop"
-	} else if elevState.Behavior == 0 {
+	} else if elevState.Direction == 0 {
 		state.Direction = "up"
 	}
 	state.DRs = elevState.DRList
