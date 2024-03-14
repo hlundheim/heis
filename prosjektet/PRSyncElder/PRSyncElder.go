@@ -33,13 +33,13 @@ func UpdatePRs(PRs [][2]bool, NewPRs chan [][2]bool, PRCompletions chan [][2]boo
 }
 
 func Initialize(PRUpdates2 chan [][2]bool, PRs [][2]bool) {
-	port := 57003
+	port := 57000
 	NewPRs := make(chan [][2]bool)
 	PRCompletions := make(chan [][2]bool)
 	PRUpdates := make(chan [][2]bool)
 
-	go bcast.Receiver(port, NewPRs)
-	go bcast.Receiver(port+1, PRCompletions)
+	go bcast.Receiver(port+3, NewPRs)
+	go bcast.Receiver(port+4, PRCompletions)
 	go UpdatePRs(PRs, NewPRs, PRCompletions, PRUpdates, PRUpdates2)
-	go bcast.Transmitter(port+2, PRUpdates)
+	go bcast.Transmitter(port+5, PRUpdates)
 }

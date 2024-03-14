@@ -24,8 +24,7 @@ func PRUpdater(PRs *[][2]bool, PRUpdates chan [][2]bool, elderTakeover chan bool
 func blockUntilElder(liveElevs chan []string, liveElevsFetchReq chan bool, elderTakeover chan bool) {
 	time.Sleep(500 * time.Millisecond)
 	for {
-		liveElevsFetchReq <- true
-		if elevatorLifeStates.CheckIfElder(<-liveElevs) {
+		if elevatorLifeStates.CheckIfElder(liveElevs, liveElevsFetchReq) {
 			fmt.Println("Du er elder")
 			elderTakeover <- true
 			break
@@ -35,7 +34,7 @@ func blockUntilElder(liveElevs chan []string, liveElevsFetchReq chan bool, elder
 }
 
 func Initialize() {
-	port := 57001
+	port := 57000
 	numFloors := 4
 	PRs := make([][2]bool, numFloors)
 	PRs = elevator.GeneratePRArray(PRs)
@@ -45,7 +44,7 @@ func Initialize() {
 	elderTakeover := make(chan bool)
 	shutdownConfirm := make(chan bool)
 
-	go bcast.Receiver(port+4, PRUpdates)
+	go bcast.Receiver(port+5, PRUpdates)
 	go PRUpdater(&PRs, PRUpdates, elderTakeover, shutdownConfirm)
 	go elevatorLifeStates.Initialize(liveElevs, liveElevsFetchReq)
 

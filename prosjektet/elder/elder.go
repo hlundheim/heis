@@ -5,8 +5,19 @@ import (
 	"heis/PRAssigner"
 	"heis/PRSyncElder"
 	"heis/elevator"
+	"heis/elevatorLifeStates"
 	"heis/network/bcast"
+	"time"
 )
+
+func checkIfDisc(liveElevs chan []string, liveElevsFetchReq chan bool) {
+	for {
+		if elevatorLifeStates.CheckIfElder(liveElevs, liveElevsFetchReq) {
+			panic("du er disconnected")
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
 
 func removeDiscElevs(states *map[string]elevator.Elevator, liveElevs []string) map[string]elevator.Elevator {
 	for Birthday := range *states {
@@ -29,9 +40,7 @@ func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevs chan []stri
 		currentInfo := <-elevInfo
 		states[currentInfo.Birthday] = currentInfo.ElevInfo
 		liveElevsFetchReq <- true
-		a := <-liveElevs
-		removeDiscElevs(&states, a)
-		//os.Stdout.Sync()
+		removeDiscElevs(&states, <-liveElevs)
 		elevStates <- states
 	}
 }
@@ -41,6 +50,7 @@ func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map
 		a := PRAssigner.AssignPRs(<-elevStates, <-PRUpdates2)
 		fmt.Println("elder fordelt PR: ", a)
 		distributedPRs <- a
+		panic("aaaa")
 		// a := <-elevStates
 		// b := <-PRUpdates2
 		// fmt.Println(a)
@@ -52,15 +62,16 @@ func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map
 }
 
 func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool, PRs [][2]bool) {
-	port := 57001
+	port := 57000
 	elevInfo := make(chan elevator.ElevPacket)
 	distributedPRs := make(chan map[string][][2]bool)
 	elevStates := make(chan map[string]elevator.Elevator)
 	PRUpdates2 := make(chan [][2]bool)
 
 	go PRSyncElder.Initialize(PRUpdates2, PRs)
-	go bcast.Receiver(port, elevInfo)
-	go bcast.Transmitter(port+1, distributedPRs)
+	go bcast.Receiver(port+1, elevInfo)
+	go bcast.Transmitter(port+2, distributedPRs)
 	go DistributePRs(distributedPRs, elevStates, PRUpdates2)
 	go MaintainElevStates(elevInfo, liveElevs, liveElevsFetchReq, elevStates)
+	go checkIfDisc(liveElevs, liveElevsFetchReq)
 }

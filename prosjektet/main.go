@@ -15,6 +15,8 @@ func main() {
 	PRCompletions := make(chan [][2]bool)
 	globalPRs := make(chan [][2]bool)
 	elevState := make(chan elevator.Elevator)
+
+	//processPair.Initialize(elevatorLifeStates.LocalBirthday)
 	go apprentice2.Initialize()
 	apprentice.Initialize(elevatorLifeStates.LocalBirthday, recievedPRs, newPRs, PRCompletions, globalPRs, elevState)
 	go bigTest.Initialize(newPRs, recievedPRs, PRCompletions, globalPRs, elevState)
