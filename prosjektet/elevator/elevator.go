@@ -13,9 +13,9 @@ const (
 type ElevatorDirection int
 
 const (
-	ED_Up   ElevatorDirection = 1
-	ED_Down                   = -1
-	ED_Stop                   = 0
+	ED_Up   ElevatorDirection = 0
+	ED_Down                   = 1
+	ED_Stop                   = 2
 )
 
 type Elevator struct {
@@ -32,8 +32,9 @@ type ElevPacket struct {
 	ElevInfo Elevator
 }
 
-// elevator functions
 var numFloors = 4
+
+// elevator functions
 
 func CreateElev() Elevator {
 	elev := Elevator{}
