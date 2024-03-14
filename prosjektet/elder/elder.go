@@ -12,7 +12,7 @@ import (
 
 func checkIfDisc(liveElevs chan []string, liveElevsFetchReq chan bool) {
 	for {
-		if elevatorLifeStates.CheckIfElder(liveElevs, liveElevsFetchReq) {
+		if !elevatorLifeStates.CheckIfElder(liveElevs, liveElevsFetchReq) {
 			panic("du er disconnected")
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -50,7 +50,6 @@ func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map
 		a := PRAssigner.AssignPRs(<-elevStates, <-PRUpdates2)
 		fmt.Println("elder fordelt PR: ", a)
 		distributedPRs <- a
-		panic("aaaa")
 		// a := <-elevStates
 		// b := <-PRUpdates2
 		// fmt.Println(a)
