@@ -60,7 +60,7 @@ func GenerateDRArray(numFloors int, DRList []bool) []bool {
 
 func GeneratePRArray(PRList [][2]bool) [][2]bool {
 	for i := range PRList {
-		PRList[i] = make([]bool, 2)
+		PRList[i] = [2]bool{}
 	}
 	//Dette erstattes ved å sette PRList lik PRList.txt når dette er implementert
 	return PRList
