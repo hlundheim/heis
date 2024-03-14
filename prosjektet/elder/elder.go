@@ -23,17 +23,15 @@ func removeDiscElevs(states *map[string]elevator.Elevator, liveElevs []string) m
 	return *states
 }
 
-func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevUpdates chan []string, elevStates chan map[string]elevator.Elevator) {
+func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevs chan []string, liveElevsFetchReq chan bool, elevStates chan map[string]elevator.Elevator) {
 	states := make(map[string]elevator.Elevator)
 	for {
-		select {
-		case currentInfo := <-elevInfo:
-			states[currentInfo.Birthday] = currentInfo.ElevInfo
-		case liveElevs := <-liveElevUpdates:
-			//fjerner som referanse pga map lock
-			fmt.Println(liveElevs)
-			removeDiscElevs(&states, liveElevs)
-		}
+		currentInfo := <-elevInfo
+		states[currentInfo.Birthday] = currentInfo.ElevInfo
+		liveElevsFetchReq <- true
+		a := <-liveElevs
+		removeDiscElevs(&states, a)
+		//os.Stdout.Sync()
 		elevStates <- states
 	}
 }
@@ -43,10 +41,17 @@ func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map
 		a := PRAssigner.AssignPRs(<-elevStates, <-PRUpdates2)
 		fmt.Println("elder fordelt PR: ", a)
 		distributedPRs <- a
+		// a := <-elevStates
+		// b := <-PRUpdates2
+		// fmt.Println(a)
+		// fmt.Println(b)
+		// c := PRAssigner.AssignPRs(a, b)
+		// fmt.Println("elder fordelt PR: ", c)
+		// distributedPRs <- c
 	}
 }
 
-func Initialize(liveElevUpdates chan []string, PRs [][2]bool) {
+func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool, PRs [][2]bool) {
 	port := 57001
 	elevInfo := make(chan elevator.ElevPacket)
 	distributedPRs := make(chan map[string][][2]bool)
@@ -57,5 +62,5 @@ func Initialize(liveElevUpdates chan []string, PRs [][2]bool) {
 	go bcast.Receiver(port, elevInfo)
 	go bcast.Transmitter(port+1, distributedPRs)
 	go DistributePRs(distributedPRs, elevStates, PRUpdates2)
-	go MaintainElevStates(elevInfo, liveElevUpdates, elevStates)
+	go MaintainElevStates(elevInfo, liveElevs, liveElevsFetchReq, elevStates)
 }

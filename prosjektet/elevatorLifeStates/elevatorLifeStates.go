@@ -9,15 +9,27 @@ import (
 
 var LocalBirthday = time.Now().Format(time.RFC3339Nano)
 
-func UpdateHandler(elevUpdates chan peers.PeerUpdate, liveElevUpdates chan []string) {
+// func UpdateHandler(elevUpdates chan peers.PeerUpdate, liveElevUpdates chan []string) {
+// 	for {
+// 		update := <-elevUpdates
+// 		fmt.Println("live elevs: %s  ", update.Peers)
+// 		fmt.Println("new elevs: %s  ", update.New)
+// 		fmt.Println("lost elevs: %s  ", update.Lost)
+// 		liveElevUpdates <- update.Peers
+// 	}
+// }
+
+func updateLiveElevs(elevUpdates chan peers.PeerUpdate, liveElevs chan []string, liveElevsFetchReq chan bool) {
+	var currentElevs peers.PeerUpdate
 	for {
-		update := <-elevUpdates
-		fmt.Println("live elevs: %s  ", update.Peers)
-		fmt.Println("new elevs: %s  ", update.New)
-		fmt.Println("lost elevs: %s  ", update.Lost)
-		liveElevUpdates <- update.Peers
-		liveElevUpdates <- update.Peers
-		liveElevUpdates <- update.Peers
+		select {
+		case currentElevs = <-elevUpdates:
+			fmt.Println("live elevs: %s  ", currentElevs.Peers)
+			fmt.Println("new elevs: %s  ", currentElevs.New)
+			fmt.Println("lost elevs: %s  ", currentElevs.Lost)
+		case <-liveElevsFetchReq:
+			liveElevs <- currentElevs.Peers
+		}
 	}
 }
 
@@ -45,11 +57,11 @@ func sortElevsByAge(liveElevs []string) []string {
 	return liveElevs
 }
 
-func Initialize(liveElevUpdates chan []string) {
+func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool) {
 	port := 57000
 	elevUpdateEN := make(chan bool)
 	elevUpdates := make(chan peers.PeerUpdate)
 	go peers.Transmitter(port, LocalBirthday, elevUpdateEN)
 	go peers.Receiver(port, elevUpdates)
-	go UpdateHandler(elevUpdates, liveElevUpdates)
+	go updateLiveElevs(elevUpdates, liveElevs, liveElevsFetchReq)
 }

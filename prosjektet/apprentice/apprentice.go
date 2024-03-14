@@ -9,8 +9,10 @@ import (
 func updateReceivedPRs(distributedPRs chan map[string][][2]bool, birthday string, recievedPRs chan [][2]bool) {
 	for {
 		a := (<-distributedPRs)[birthday]
-		recievedPRs <- a
 		fmt.Println("apprentice: ", a)
+		if len(a) > 0 {
+			recievedPRs <- a
+		}
 	}
 }
 
