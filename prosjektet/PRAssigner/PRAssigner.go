@@ -22,8 +22,8 @@ type PRAInput struct {
 
 func PRAFormatStates(elevState map[string]elevator.Elevator) map[string]PRAElevState {
 	PRAStates := make(map[string]PRAElevState)
-	for birthday, state := range elevState {
-		a := PRAFormatState(state)
+	for birthday := range elevState {
+		a := PRAFormatState(elevState[birthday])
 		PRAStates[birthday] = a
 	}
 	return PRAStates
@@ -64,10 +64,14 @@ func AssignPRs(elevStates map[string]elevator.Elevator, PRs [][2]bool) map[strin
 
 	fmt.Println(PRs)
 	fmt.Println(elevStates)
-	input := PRAInput{
-		PRs:    PRs,
-		States: PRAFormatStates(elevStates),
-	}
+	var input PRAInput
+	input.PRs = PRs
+	input.States = PRAFormatStates(elevStates)
+
+	// input := PRAInput{
+	// 	PRs:    PRs,
+	// 	States: PRAFormatStates(elevStates),
+	// }
 
 	// p:= elevator.Elevator{1, 1, 0, []bool{false,false,false,false}, [][2]bool{{false,false},{false,false},{true,true},{false,false}}}
 	// fmt.Println(p)
