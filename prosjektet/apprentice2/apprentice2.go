@@ -13,7 +13,7 @@ func PRUpdater(PRs *[][2]bool, PRUpdates chan [][2]bool, elderTakeover chan bool
 	for {
 		select {
 		case *PRs = <-PRUpdates:
-			fmt.Println("recieved update ", *PRs)
+			//fmt.Println("recieved update ", *PRs)
 		case <-elderTakeover:
 			shutdownConfirm <- true
 			return
