@@ -49,7 +49,8 @@ func atFloorArrival(PRCompletions chan [][2]bool) {
 	case elevator.EB_Moving:
 		if requestsShouldStop() {
 			go stopAtFloor(PRCompletions)
-		} else if (!requestsAbove() && !requestsBelow()) || elev.Floor == 0 {
+		} else if (!requestsAbove() && !requestsBelow()) {
+			//|| elev.Floor == 0 
 			elevio.SetMotorDirection(elevio.MD_Stop)
 			elev.Behavior = elevator.EB_Idle
 			elev.Direction = elevator.ED_Stop
@@ -89,7 +90,7 @@ func clearRequestsAtCurrentFloor(PRCompletions chan [][2]bool) {
 	PRCompletionList := make([][2]bool, numFloors)
 	elevator.GeneratePRArray(PRCompletionList)
 	elev.DRList[elev.Floor] = false
-	DRStorage.WriteDRs(elev.DRList)
+	//DRStorage.WriteDRs(elev.DRList)
 	elevio.SetButtonLamp(elevio.BT_Cab, elev.Floor, false)
 	switch elev.Direction {
 	case elevator.ED_Stop:
@@ -235,7 +236,7 @@ func handleButtonPress(button elevio.ButtonEvent, newPRs chan [][2]bool) {
 	switch button.Button {
 	case elevio.BT_Cab:
 		elev.DRList[button.Floor] = true
-		DRStorage.WriteDRs(elev.DRList)
+		//DRStorage.WriteDRs(elev.DRList)
 		elevio.SetButtonLamp(button.Button, button.Floor, true)
 	case elevio.BT_HallUp:
 		updateAndBroadcastPRList(button, newPRs)
