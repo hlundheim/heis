@@ -22,7 +22,7 @@ func primaryBroadcast(localMACaddr string, broadcast chan string) {
 	}
 }
 
-func Initialize(localBirthday string) {
+func Initialize() {
 	port := 57000
 	localMACaddr := getMacAddr()
 	listener := make(chan string)

@@ -1,5 +1,10 @@
 package elevator
 
+import (
+	"fmt"
+	"heis/DRStorage"
+)
+
 //type
 
 type ElevatorBehavior int
@@ -40,23 +45,26 @@ func CreateElev() Elevator {
 	elev := Elevator{}
 	elev.DRList = make([]bool, numFloors)
 	elev.PRList = make([][2]bool, numFloors)
-	GenerateDRArray(numFloors, elev.DRList)
+	elev.DRList = GenerateDRArray(numFloors, elev.DRList)
 	GeneratePRArray(elev.PRList)
 	return elev
 }
 
 func GenerateDRArray(numFloors int, DRList []bool) []bool {
-	for i := 0; i < numFloors; i++ {
-		DRList[i] = false
+	DRs := DRStorage.GetUncorruptedDRs()
+	if len(DRs) == 0 {
+		for i := 0; i < numFloors; i++ {
+			DRList[i] = false
+		}
+		return DRList
 	}
-	//Dette erstattes ved å sette DRList lik DRList.txt når dette er implementert
-	return DRList
+	fmt.Println(DRs)
+	return DRs
 }
 
 func GeneratePRArray(PRList [][2]bool) [][2]bool {
 	for i := range PRList {
 		PRList[i] = [2]bool{}
 	}
-	//Dette erstattes ved å sette PRList lik PRList.txt når dette er implementert
 	return PRList
 }

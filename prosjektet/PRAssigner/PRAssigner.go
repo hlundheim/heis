@@ -23,8 +23,9 @@ type PRAInput struct {
 
 func PRAFormatStates(elevState map[string]elevator.Elevator) map[string]PRAElevState {
 	mutex := &sync.Mutex{}
-	PRAStates := make(map[string]PRAElevState)
 	mutex.Lock()
+	PRAStates := make(map[string]PRAElevState)
+	
 	for birthday, state := range elevState {
 		PRAStates[birthday] = PRAFormatState(state)
 	}

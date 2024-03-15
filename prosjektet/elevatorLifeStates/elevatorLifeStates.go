@@ -18,7 +18,7 @@ func updateLiveElevs(elevUpdates chan peers.PeerUpdate, liveElevs chan []string,
 			fmt.Println("new elevs: %s  ", currentElevs.New)
 			fmt.Println("lost elevs: %s  ", currentElevs.Lost)
 		case <-liveElevsFetchReq:
-			liveElevs <- sortElevsByAge(currentElevs.Peers) 
+			liveElevs <- sortElevsByAge(currentElevs.Peers)
 		}
 	}
 }
@@ -27,8 +27,8 @@ func CheckIfElder(liveElevs chan []string, liveElevFetchReq chan bool) bool {
 	liveElevFetchReq <- true
 	liveElevsAAA := <-liveElevs
 	elderBirthday := liveElevsAAA[0]
-	//return (elderBirthday == LocalBirthday && len(liveElevsAAA) > 1)
-	return (elderBirthday == LocalBirthday)
+	return (elderBirthday == LocalBirthday && len(liveElevsAAA) > 1)
+	//return (elderBirthday == LocalBirthday)
 }
 
 func sortElevsByAge(liveElevs []string) []string {

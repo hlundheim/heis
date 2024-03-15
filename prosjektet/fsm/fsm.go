@@ -2,6 +2,7 @@ package fsm
 
 import (
 	"fmt"
+	"heis/DRStorage"
 	"heis/elevator"
 	"heis/elevio"
 	"time"
@@ -9,7 +10,7 @@ import (
 
 var numFloors = 4
 var doorTimer = 3 * time.Second
-var elev = elevator.CreateElev()
+var elev elevator.Elevator
 
 func initBetweenFloors() {
 	elev.Behavior = elevator.EB_Moving
@@ -30,14 +31,13 @@ func initElev(drv_floors chan int) {
 	}
 }
 
-func atFloorArrival(PRCompletions chan [][2]bool, elevState chan elevator.Elevator) {
+func atFloorArrival(PRCompletions chan [][2]bool) {
 	elevio.SetFloorIndicator(elev.Floor)
 	if elev.Floor == numFloors-1 {
 		elev.Direction = elevator.ED_Down
 	} else if elev.Floor == 0 {
 		elev.Direction = elevator.ED_Up
 	}
-	//elevState <- elev
 	switch elev.Behavior {
 	case elevator.EB_Moving:
 		if requestsShouldStop() {
@@ -82,6 +82,7 @@ func clearRequestsAtCurrentFloor(PRCompletions chan [][2]bool) {
 	PRCompletionList := make([][2]bool, numFloors)
 	elevator.GeneratePRArray(PRCompletionList)
 	elev.DRList[elev.Floor] = false
+	DRStorage.WriteDRs(elev.DRList)
 	elevio.SetButtonLamp(elevio.BT_Cab, elev.Floor, false)
 	switch elev.Direction {
 	case elevator.ED_Stop:
@@ -227,6 +228,7 @@ func handleButtonPress(button elevio.ButtonEvent, newPRs chan [][2]bool) {
 	switch button.Button {
 	case elevio.BT_Cab:
 		elev.DRList[button.Floor] = true
+		DRStorage.WriteDRs(elev.DRList)
 		elevio.SetButtonLamp(button.Button, button.Floor, true)
 	case elevio.BT_HallUp:
 		updateAndBroadcastPRList(button, newPRs)
@@ -260,23 +262,22 @@ func updateHallButtonLights(PRs [][2]bool) {
 	}
 }
 
-func buttonHandling(newPRs chan [][2]bool, elevState chan elevator.Elevator) {
+func buttonHandling(newPRs chan [][2]bool) {
 	drv_buttons := make(chan elevio.ButtonEvent)
 	go elevio.PollButtons(drv_buttons)
 	for {
 		button := <-drv_buttons
 		handleButtonPress(button, newPRs)
-		//elevState <- elev
 	}
 }
 
-func floorHandling(drv_floors chan int, PRCompletions chan [][2]bool, elevState chan elevator.Elevator) {
+func floorHandling(drv_floors chan int, PRCompletions chan [][2]bool) {
 	go elevio.PollFloorSensor(drv_floors)
 	for {
 		newFloor := <-drv_floors
 		if newFloor != -1 {
 			elev.Floor = newFloor
-			atFloorArrival(PRCompletions, elevState)
+			atFloorArrival(PRCompletions)
 		}
 	}
 }
@@ -295,8 +296,8 @@ func handlePR(recievedPRs chan [][2]bool, globalPRs chan [][2]bool) {
 func detectElevStateChange(elevState chan elevator.Elevator) {
 	//currentElevState := elev
 	for {
-		time.Sleep(100 * time.Millisecond)
 		elevState <- elev
+		time.Sleep(100 * time.Millisecond)
 		// if elev != currentElevState {
 		// }
 	}
@@ -304,7 +305,8 @@ func detectElevStateChange(elevState chan elevator.Elevator) {
 }
 
 func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions chan [][2]bool, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
-
+	elev = elevator.CreateElev()
+	fmt.Println(elev.DRList)
 	elevio.Init("localhost:15657", numFloors)
 
 	drv_floors := make(chan int)
@@ -312,19 +314,19 @@ func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions
 
 	initElev(drv_floors)
 
-	go buttonHandling(newPRs, elevState)
-	go floorHandling(drv_floors, PRCompletions, elevState)
+	go buttonHandling(newPRs)
+	go floorHandling(drv_floors, PRCompletions)
 	go elevio.PollObstructionSwitch(drv_obstr)
 	go handlePR(recievedPRs, globalPRs)
 	go handleJobsWaiting(PRCompletions)
 	go detectElevStateChange(elevState)
 
 	//code for testing purposes
-	for f := 0; f < numFloors; f++ {
-		for b := elevio.ButtonType(0); b < 3; b++ {
-			elevio.SetButtonLamp(b, f, false)
-		}
-	}
+	// for f := 0; f < numFloors; f++ {
+	// 	for b := elevio.ButtonType(0); b < 3; b++ {
+	// 		elevio.SetButtonLamp(b, f, false)
+	// 	}
+	// }
 	elevio.SetDoorOpenLamp(false)
 	//end of code for testing purposes
 
