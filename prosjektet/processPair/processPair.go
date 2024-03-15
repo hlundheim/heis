@@ -13,9 +13,6 @@ import (
 func getMacAddr() string {
 	ifas, err := net.Interfaces()
 	errorHandler.HandleError(err)
-	for _, ifa := range ifas {
-		fmt.Println(ifa)
-	}
 	return ifas[1].HardwareAddr.String()
 }
 
@@ -29,7 +26,6 @@ func primaryBroadcast(localMACaddr string, broadcast chan string) {
 func Initialize() {
 	port := 57000
 	localMACaddr := getMacAddr()
-	fmt.Println(localMACaddr)
 	listener := make(chan string)
 	broadcast := make(chan string)
 	go bcast.Receiver(port+6, listener)
@@ -39,8 +35,6 @@ func Initialize() {
 	for {
 		select {
 		case MACaddr := <-listener:
-			fmt.Println(MACaddr)
-			fmt.Println(localMACaddr)
 			if MACaddr == localMACaddr {
 				timeOut.Stop()
 				timeOut.Reset(1000 * time.Millisecond)

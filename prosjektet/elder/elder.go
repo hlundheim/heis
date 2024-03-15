@@ -1,7 +1,6 @@
 package elder
 
 import (
-	"fmt"
 	"heis/PRAssigner"
 	"heis/PRSyncElder"
 	"heis/elevator"
@@ -47,17 +46,18 @@ func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevs chan []stri
 
 func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map[string]elevator.Elevator, PRUpdates2 chan [][2]bool, PRFetchReq chan bool) {
 	for {
-		// a := PRAssigner.AssignPRs(<-elevStates, <-PRUpdates2)
-		// fmt.Println("elder fordelt PR: ", a)
-		// distributedPRs <- a
-		a := <-elevStates
+		currentElevState := <-elevStates
 		PRFetchReq <- true
-		b := <-PRUpdates2
-		//fmt.Println(a)
-		//fmt.Println(b)
-		c := PRAssigner.AssignPRs(a, b)
-		fmt.Println("elder fordelt PR: ", c)
-		distributedPRs <- c
+		distributedPRs <- PRAssigner.AssignPRs(currentElevState, <-PRUpdates2)
+
+		// a := <-elevStates
+		// PRFetchReq <- true
+		// b := <-PRUpdates2
+		// fmt.Println(a)
+		// fmt.Println(b)
+		// c := PRAssigner.AssignPRs(a, b)
+		// fmt.Println("elder fordelt PR: ", c)
+		// distributedPRs <- c
 	}
 }
 
