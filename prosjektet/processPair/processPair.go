@@ -1,6 +1,7 @@
 package processPair
 
 import (
+	"fmt"
 	"heis/network/bcast"
 	"heis/utilities/errorHandler"
 	"net"
@@ -34,6 +35,8 @@ func Initialize() {
 	for {
 		select {
 		case MACaddr := <-listener:
+			fmt.Println(MACaddr)
+			fmt.Println(localMACaddr)
 			if MACaddr == localMACaddr {
 				timeOut.Stop()
 				timeOut.Reset(1000 * time.Millisecond)
