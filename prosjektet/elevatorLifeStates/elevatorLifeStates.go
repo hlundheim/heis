@@ -9,16 +9,6 @@ import (
 
 var LocalBirthday = time.Now().Format(time.RFC3339Nano)
 
-// func UpdateHandler(elevUpdates chan peers.PeerUpdate, liveElevUpdates chan []string) {
-// 	for {
-// 		update := <-elevUpdates
-// 		fmt.Println("live elevs: %s  ", update.Peers)
-// 		fmt.Println("new elevs: %s  ", update.New)
-// 		fmt.Println("lost elevs: %s  ", update.Lost)
-// 		liveElevUpdates <- update.Peers
-// 	}
-// }
-
 func updateLiveElevs(elevUpdates chan peers.PeerUpdate, liveElevs chan []string, liveElevsFetchReq chan bool) {
 	var currentElevs peers.PeerUpdate
 	for {
@@ -28,7 +18,7 @@ func updateLiveElevs(elevUpdates chan peers.PeerUpdate, liveElevs chan []string,
 			fmt.Println("new elevs: %s  ", currentElevs.New)
 			fmt.Println("lost elevs: %s  ", currentElevs.Lost)
 		case <-liveElevsFetchReq:
-			liveElevs <- currentElevs.Peers
+			liveElevs <- sortElevsByAge(currentElevs.Peers) 
 		}
 	}
 }

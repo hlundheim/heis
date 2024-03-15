@@ -295,7 +295,7 @@ func handlePR(recievedPRs chan [][2]bool, globalPRs chan [][2]bool) {
 func detectElevStateChange(elevState chan elevator.Elevator) {
 	//currentElevState := elev
 	for {
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 		elevState <- elev
 		// if elev != currentElevState {
 		// }
