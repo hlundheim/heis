@@ -53,7 +53,7 @@ func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map
 		a := <-elevStates
 		PRFetchReq <- true
 		b := <-PRUpdates2
-		fmt.Println(a)
+		//fmt.Println(a)
 		//fmt.Println(b)
 		c := PRAssigner.AssignPRs(a, b)
 		fmt.Println("elder fordelt PR: ", c)
