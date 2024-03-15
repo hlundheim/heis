@@ -2,7 +2,6 @@ package fsm
 
 import (
 	"fmt"
-	"heis/DRStorage"
 	"heis/elevator"
 	"heis/elevio"
 	"time"
@@ -49,8 +48,8 @@ func atFloorArrival(PRCompletions chan [][2]bool) {
 	case elevator.EB_Moving:
 		if requestsShouldStop() {
 			go stopAtFloor(PRCompletions)
-		} else if (!requestsAbove() && !requestsBelow()) {
-			//|| elev.Floor == 0 
+		} else if !requestsAbove() && !requestsBelow() {
+			//|| elev.Floor == 0
 			elevio.SetMotorDirection(elevio.MD_Stop)
 			elev.Behavior = elevator.EB_Idle
 			elev.Direction = elevator.ED_Stop

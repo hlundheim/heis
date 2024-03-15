@@ -26,8 +26,12 @@ func updateLiveElevs(elevUpdates chan peers.PeerUpdate, liveElevs chan []string,
 func CheckIfElder(liveElevs chan []string, liveElevFetchReq chan bool) bool {
 	liveElevFetchReq <- true
 	liveElevsAAA := <-liveElevs
-	elderBirthday := liveElevsAAA[0]
-	return (elderBirthday == LocalBirthday && len(liveElevsAAA) > 1)
+	if len(liveElevsAAA) == 0 {
+		return false
+	} else {
+		elderBirthday := liveElevsAAA[0]
+		return (elderBirthday == LocalBirthday && len(liveElevsAAA) > 1)
+	}
 	//return (elderBirthday == LocalBirthday)
 }
 

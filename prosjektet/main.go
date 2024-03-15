@@ -7,7 +7,7 @@ import (
 	"heis/elevator"
 	"heis/elevatorLifeStates"
 	"heis/fsm"
-	"heis/processPair"
+	"heis/processPair2"
 	"time"
 )
 
@@ -18,7 +18,7 @@ func main() {
 	globalPRs := make(chan [][2]bool)
 	elevState := make(chan elevator.Elevator)
 
-	processPair.Initialize()
+	processPair2.Initialize()
 	fmt.Println("hæ")
 	go apprentice2.Initialize()
 	apprentice.Initialize(elevatorLifeStates.LocalBirthday, recievedPRs, newPRs, PRCompletions, globalPRs, elevState)

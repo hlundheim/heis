@@ -24,7 +24,7 @@ func main() {
 	//port := "127.0.0.1:17000"
 	//port := "10.100.23.255:17000"
 	//port := "127.0.0.255:17000"
-	ip := "127.0.0.1"
+	ip := "localhost"
 	port := ":17000"
 	a, err := net.ResolveUDPAddr("udp4", ip+port)
 	handleError(err)
@@ -49,14 +49,14 @@ func main() {
 	//broadcastIP := "10.100.23.255:17000"
 	//broadcastIP := "127.0.0.255:17000"
 	//broadcastIP := "127.0.0.1:17000"
-	broadcastIP := "127.0.0.1:17000"
+	broadcastIP := "localhost:17000"
 	addr, err := net.ResolveUDPAddr("udp4", broadcastIP)
 	primarySocket, err := net.DialUDP("udp4", nil, addr)
 
 	//Creating backup
 	fmt.Println("... creating new backup")
-	//exec.Command("gnome-terminal", "--", "go", "run", "exercise4.go").Run()
-	exec.Command("cmd", "/C", "start", "powershell", "go", "run", "exercise4.go").Run()
+	exec.Command("gnome-terminal", "--", "go", "run", "exercise4.go").Run()
+	//exec.Command("cmd", "/C", "start", "powershell", "go", "run", "exercise4.go").Run()
 	fmt.Println("Resuming counting from ", countingNr)
 
 	for {
