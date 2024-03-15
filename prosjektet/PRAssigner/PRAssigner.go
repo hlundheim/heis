@@ -25,7 +25,7 @@ func PRAFormatStates(elevState map[string]elevator.Elevator) map[string]PRAElevS
 	mutex := &sync.Mutex{}
 	mutex.Lock()
 	PRAStates := make(map[string]PRAElevState)
-	
+
 	for birthday, state := range elevState {
 		PRAStates[birthday] = PRAFormatState(state)
 	}
@@ -93,8 +93,6 @@ func AssignPRs(elevStates map[string]elevator.Elevator, PRs [][2]bool) map[strin
 	// 	PRs:    [][2]bool{{false,false},{true,true},{true,true},{false,false}},
 	// 	States: PRAFormatStates(map[string]elevator.Elevator{"2024-03-15T02:34:58.993442312+01:00":elevator.Elevator{1, 1, 0, []bool{false,false,false,false}, [][2]bool{{false,false},{false,false},{true,true},{false,false}}}, "2024-03-15T02:36:00.375212557+01:00":elevator.Elevator{2, 0, 2, []bool{false,false,false,false}, [][2]bool{{false,false},{false,false},{false,false},{false,false}}}, "2024-03-15T02:36:10.152316766+01:00": elevator.Elevator{2, 1, 1, []bool{true,false,false,false}, [][2]bool{{false,false},{true,true},{false,false},{false,false}}}}),
 	// }
-
-	fmt.Println(input)
 
 	jsonBytes, err := json.Marshal(input)
 	if err != nil {
