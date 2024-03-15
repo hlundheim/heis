@@ -13,6 +13,13 @@ var doorTimer = 3 * time.Second
 var elev elevator.Elevator
 
 func initBetweenFloors() {
+	// if slices.Contains(elev.DRList, true) {
+	// 	elev.Behavior = elevator.EB_Idle
+	// } else {
+	// 	elev.Behavior = elevator.EB_Moving
+	// 	elev.Direction = elevator.ED_Down
+	// 	elevio.SetMotorDirection(elevio.MD_Down)
+	// }
 	elev.Behavior = elevator.EB_Moving
 	elev.Direction = elevator.ED_Down
 	elevio.SetMotorDirection(elevio.MD_Down)
@@ -42,7 +49,7 @@ func atFloorArrival(PRCompletions chan [][2]bool) {
 	case elevator.EB_Moving:
 		if requestsShouldStop() {
 			go stopAtFloor(PRCompletions)
-		} else if !requestsAbove() && !requestsBelow() {
+		} else if (!requestsAbove() && !requestsBelow()) || (!requestsBelow() && elev.Direction == elevator.ED_Down) {
 			elevio.SetMotorDirection(elevio.MD_Stop)
 			elev.Behavior = elevator.EB_Idle
 			elev.Direction = elevator.ED_Stop
