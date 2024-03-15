@@ -1,7 +1,6 @@
 package apprentice
 
 import (
-	"fmt"
 	"heis/elevator"
 	"heis/network/bcast"
 )
@@ -13,7 +12,7 @@ func updateReceivedPRs(distributedPRs chan map[string][][2]bool, birthday string
 		if len(a) > 0 {
 			recievedPRs <- a
 		} else {
-			recievedPRs <- [][2]bool{{false,false},{false,false},{false,false},{false,false}}
+			recievedPRs <- [][2]bool{{false, false}, {false, false}, {false, false}, {false, false}}
 		}
 	}
 }
