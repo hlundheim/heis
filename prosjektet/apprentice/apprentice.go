@@ -12,6 +12,8 @@ func updateReceivedPRs(distributedPRs chan map[string][][2]bool, birthday string
 		fmt.Println("apprentice: ", a)
 		if len(a) > 0 {
 			recievedPRs <- a
+		} else {
+			recievedPRs <- [][2]bool{{false,false},{false,false},{false,false},{false,false}}
 		}
 	}
 }

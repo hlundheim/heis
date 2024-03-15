@@ -19,8 +19,8 @@ func checkIfDisc(liveElevs chan []string, liveElevsFetchReq chan bool) {
 	}
 }
 
-func removeDiscElevs(states *map[string]elevator.Elevator, liveElevs []string) map[string]elevator.Elevator {
-	for Birthday := range *states {
+func removeDiscElevs(states map[string]elevator.Elevator, liveElevs []string) map[string]elevator.Elevator {
+	for Birthday := range states {
 		flag := false
 		for _, birthday := range liveElevs {
 			if Birthday == birthday {
@@ -28,10 +28,10 @@ func removeDiscElevs(states *map[string]elevator.Elevator, liveElevs []string) m
 			}
 		}
 		if !flag {
-			delete(*states, Birthday)
+			delete(states, Birthday)
 		}
 	}
-	return *states
+	return states
 }
 
 func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevs chan []string, liveElevsFetchReq chan bool, elevStates chan map[string]elevator.Elevator) {
@@ -40,7 +40,7 @@ func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevs chan []stri
 		currentInfo := <-elevInfo
 		states[currentInfo.Birthday] = currentInfo.ElevInfo
 		liveElevsFetchReq <- true
-		removeDiscElevs(&states, <-liveElevs)
+		states = removeDiscElevs(states, <-liveElevs)
 		elevStates <- states
 	}
 }
@@ -54,7 +54,7 @@ func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map
 		PRFetchReq <- true
 		b := <-PRUpdates2
 		fmt.Println(a)
-		fmt.Println(b)
+		//fmt.Println(b)
 		c := PRAssigner.AssignPRs(a, b)
 		fmt.Println("elder fordelt PR: ", c)
 		distributedPRs <- c
