@@ -29,10 +29,8 @@ func initElev(drv_floors chan int) {
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		elevio.SetFloorIndicator(elev.Floor)
 	}
-	for i := 0; i < len(elev.DRList); i++ {
-		if elev.DRList[i] {
-			elevio.SetButtonLamp(elevio.BT_Cab, i, true)
-		}
+	for i := range elev.DRList {
+		elevio.SetButtonLamp(elevio.BT_Cab, i, elev.DRList[i])
 	}
 }
 
@@ -349,7 +347,7 @@ func checkIfStuck(PRCompletions, PRCompletionOut chan [][2]bool, DRCompletion, P
 
 func Initialize(newPRs, recievedPRs, PRCompletionsOut, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
 	elev = elevator.CreateElev()
-	elevio.Init("localhost:23000", numFloors)
+	elevio.Init("localhost:23001", numFloors)
 	drv_floors := make(chan int)
 	drv_obstr := make(chan bool)
 
