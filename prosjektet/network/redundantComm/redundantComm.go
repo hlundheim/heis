@@ -1,4 +1,4 @@
-package reduntantComm
+package redundantComm
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 
 var times int = 100
 
-func reduntantSendBoolArray(sendCh chan [][2]bool, reciCh chan [][2]bool) {
+func ReduntantSendBoolArray(sendCh chan [][2]bool, reciCh chan [][2]bool) {
 	for {
 		val := <-reciCh
 		for i := 0; i < times; i++ {
@@ -20,7 +20,7 @@ func reduntantSendBoolArray(sendCh chan [][2]bool, reciCh chan [][2]bool) {
 	}
 }
 
-func reduntantReciBoolArray(reciCh chan [][2]bool, sendCh chan [][2]bool) {
+func ReduntantRecieveBoolArray(reciCh chan [][2]bool, sendCh chan [][2]bool) {
 	currentVal := <-reciCh
 	sendCh <- currentVal
 	for {

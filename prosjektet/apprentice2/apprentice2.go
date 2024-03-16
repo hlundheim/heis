@@ -6,6 +6,7 @@ import (
 	"heis/elevator"
 	"heis/elevatorLifeStates"
 	"heis/network/bcast"
+	"heis/network/redundantComm"
 	"time"
 )
 
@@ -13,7 +14,7 @@ func PRUpdater(PRs *[][2]bool, PRUpdates chan [][2]bool, elderTakeover chan bool
 	for {
 		select {
 		case *PRs = <-PRUpdates:
-			//fmt.Println("recieved update ", *PRs)
+			fmt.Println("recieved update ", *PRs)
 		case <-elderTakeover:
 			shutdownConfirm <- true
 			return
@@ -39,14 +40,16 @@ func Initialize() {
 	PRs := make([][2]bool, numFloors)
 	PRs = elevator.GeneratePRArray(PRs)
 	PRUpdates := make(chan [][2]bool)
+	PRUpdatesRed := make(chan [][2]bool)
 	liveElevs := make(chan []string)
 	liveElevsFetchReq := make(chan bool)
 	elderTakeover := make(chan bool)
 	shutdownConfirm := make(chan bool)
 
 	go bcast.Receiver(port+5, PRUpdates)
-	go PRUpdater(&PRs, PRUpdates, elderTakeover, shutdownConfirm)
+	go PRUpdater(&PRs, PRUpdatesRed, elderTakeover, shutdownConfirm)
 	go elevatorLifeStates.Initialize(liveElevs, liveElevsFetchReq)
+	go redundantComm.ReduntantRecieveBoolArray(PRUpdates, PRUpdatesRed)
 
 	blockUntilElder(liveElevs, liveElevsFetchReq, elderTakeover)
 	<-shutdownConfirm
