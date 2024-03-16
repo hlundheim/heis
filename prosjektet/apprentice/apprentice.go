@@ -29,13 +29,15 @@ func Initialize(birthday string, recievedPRs, newPRs, PRCompletions, globalPRs c
 	elevInfo := make(chan elevator.ElevPacket)
 	elevInfoRed := make(chan elevator.ElevPacket)
 	distributedPRs := make(chan map[string][][2]bool)
+	distributedPRsRed := make(chan map[string][][2]bool)
 
 	go bcast.Transmitter(port+1, elevInfoRed)
 	go redundantComm.RedundantSendElevPacket(elevInfoRed, elevInfo)
 	go bcast.Receiver(port+2, distributedPRs)
+	go redundantComm.RedundantRecieveMap(distributedPRs, distributedPRsRed)
 	go bcast.Transmitter(port+3, newPRs)
 	go bcast.Transmitter(port+4, PRCompletions)
 	go bcast.Receiver(port+5, globalPRs)
-	go updateReceivedPRs(distributedPRs, birthday, recievedPRs)
+	go updateReceivedPRs(distributedPRsRed, birthday, recievedPRs)
 	go sendElevInfo(birthday, elevState, elevInfo)
 }
