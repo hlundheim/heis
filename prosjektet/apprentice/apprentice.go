@@ -3,6 +3,7 @@ package apprentice
 import (
 	"heis/elevator"
 	"heis/network/bcast"
+	"heis/network/redundantComm"
 )
 
 func updateReceivedPRs(distributedPRs chan map[string][][2]bool, birthday string, recievedPRs chan [][2]bool) {
@@ -23,12 +24,14 @@ func sendElevInfo(birthday string, elevState chan elevator.Elevator, elevInfo ch
 	}
 }
 
-func Initialize(birthday string, recievedPRs chan [][2]bool, newPRs chan [][2]bool, PRCompletions chan [][2]bool, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
+func Initialize(birthday string, recievedPRs, newPRs, PRCompletions, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
 	port := 57000
 	elevInfo := make(chan elevator.ElevPacket)
+	elevInfoRed := make(chan elevator.ElevPacket)
 	distributedPRs := make(chan map[string][][2]bool)
 
-	go bcast.Transmitter(port+1, elevInfo)
+	go bcast.Transmitter(port+1, elevInfoRed)
+	go redundantComm.RedundantSendElevPacket(elevInfoRed, elevInfo)
 	go bcast.Receiver(port+2, distributedPRs)
 	go bcast.Transmitter(port+3, newPRs)
 	go bcast.Transmitter(port+4, PRCompletions)
