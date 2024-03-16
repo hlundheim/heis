@@ -15,7 +15,7 @@ func RedundantSendBoolArray(sendCh chan [][2]bool, reciCh chan [][2]bool) {
 			sendCh <- val
 		}
 		for i := 0; i < times; i++ {
-			sendCh <- make([][2]bool, 10)
+			sendCh <- make([][2]bool, 5)
 		}
 	}
 }
@@ -29,7 +29,7 @@ func RedundantRecieveBoolArray(reciCh chan [][2]bool, sendCh chan [][2]bool) {
 			fmt.Println(currentVal)
 			fmt.Println(val)
 			currentVal = val
-			if len(val) < 10 {
+			if len(val) < 5 {
 				sendCh <- val
 			}
 		}

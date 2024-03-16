@@ -2,6 +2,7 @@ package PRSyncElder
 
 import (
 	"heis/network/bcast"
+	"heis/network/redundantComm"
 )
 
 func addNewPR(PRs [][2]bool, newPR [][2]bool) [][2]bool {
@@ -53,6 +54,6 @@ func Initialize(PRUpdates2 chan [][2]bool, PRs [][2]bool, PRFetchReq chan bool) 
 	go bcast.Receiver(port+3, NewPRs)
 	go bcast.Receiver(port+4, PRCompletions)
 	go UpdatePRs(PRs, NewPRs, PRCompletions, PRUpdates, PRUpdates2, PRFetchReq)
-	//go redundantComm.RedundantSendBoolArray(PRUpdatesRed, PRUpdates)
+	go redundantComm.RedundantSendBoolArray(PRUpdatesRed, PRUpdates)
 	go bcast.Transmitter(port+5, PRUpdatesRed)
 }
