@@ -28,7 +28,7 @@ func RedundantRecieveBoolArray(reciCh, sendCh chan [][2]bool) {
 		val := <-reciCh
 		if !reflect.DeepEqual(currentVal, val) {
 			currentVal = val
-			if len(val) == 0 {
+			if len(val) != 0 {
 				sendCh <- val
 			}
 		}
@@ -82,7 +82,7 @@ func RedundantRecieveMap(reciCh, sendCh chan map[string][][2]bool) {
 			fmt.Println(currentVal)
 			fmt.Println(val)
 			currentVal = val
-			if len(val) == 0 {
+			if len(val) != 0 {
 				sendCh <- val
 			}
 		}
