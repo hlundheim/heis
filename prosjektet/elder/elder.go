@@ -75,9 +75,9 @@ func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool, PRs [][2]b
 	go PRSyncElder.Initialize(PRUpdates2, PRs, PRFetchReq)
 	go redundantComm.RedundantRecieveElevPacket(elevInfo, elevInfoRed)
 	go bcast.Receiver(port+1, elevInfo)
-	go bcast.Transmitter(port+2, distributedPRs)
+	go bcast.Transmitter(port+2, distributedPRsRed)
 	go redundantComm.RedundantSendMap(distributedPRsRed, distributedPRs)
-	go DistributePRs(distributedPRsRed, elevStates, PRUpdates2, PRFetchReq)
+	go DistributePRs(distributedPRs, elevStates, PRUpdates2, PRFetchReq)
 	go MaintainElevStates(elevInfoRed, liveElevs, liveElevsFetchReq, elevStates)
 	go checkIfDisc(liveElevs, liveElevsFetchReq)
 }
