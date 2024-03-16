@@ -8,7 +8,7 @@ import (
 
 var times int = 100
 
-func ReduntantSendBoolArray(sendCh chan [][2]bool, reciCh chan [][2]bool) {
+func RedundantSendBoolArray(sendCh chan [][2]bool, reciCh chan [][2]bool) {
 	for {
 		val := <-reciCh
 		for i := 0; i < times; i++ {
@@ -20,7 +20,7 @@ func ReduntantSendBoolArray(sendCh chan [][2]bool, reciCh chan [][2]bool) {
 	}
 }
 
-func ReduntantRecieveBoolArray(reciCh chan [][2]bool, sendCh chan [][2]bool) {
+func RedundantRecieveBoolArray(reciCh chan [][2]bool, sendCh chan [][2]bool) {
 	currentVal := <-reciCh
 	sendCh <- currentVal
 	for {
