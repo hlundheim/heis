@@ -29,6 +29,11 @@ func initElev(drv_floors chan int) {
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		elevio.SetFloorIndicator(elev.Floor)
 	}
+	for i := 0; i < len(elev.DRList); i++ {
+		if elev.DRList[i] {
+			elevio.SetButtonLamp(elevio.BT_Cab, i, true)
+		}
+	}
 }
 
 func atFloorArrival(PRCompletions chan [][2]bool, DRCompletion chan bool) {
