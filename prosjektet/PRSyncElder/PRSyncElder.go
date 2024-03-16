@@ -5,7 +5,7 @@ import (
 	"heis/network/redundantComm"
 )
 
-func addNewPR(PRs [][2]bool, newPR [][2]bool) [][2]bool {
+func addNewPR(PRs, newPR [][2]bool) [][2]bool {
 	for floor := range PRs {
 		for direction := range PRs[floor] {
 			PRs[floor][direction] = PRs[floor][direction] || newPR[floor][direction]
@@ -14,7 +14,7 @@ func addNewPR(PRs [][2]bool, newPR [][2]bool) [][2]bool {
 	return PRs
 }
 
-func completePR(PRs [][2]bool, PRCompletion [][2]bool) [][2]bool {
+func completePR(PRs, PRCompletion [][2]bool) [][2]bool {
 	for floor := range PRs {
 		for direction := range PRs[floor] {
 			if PRs[floor][direction] && PRCompletion[floor][direction] {
@@ -25,7 +25,7 @@ func completePR(PRs [][2]bool, PRCompletion [][2]bool) [][2]bool {
 	return PRs
 }
 
-func UpdatePRs(PRs [][2]bool, NewPRs chan [][2]bool, PRCompletions chan [][2]bool, PRUpdates chan [][2]bool, PRUpdates2 chan [][2]bool, PRFetchReq chan bool) {
+func UpdatePRs(PRs [][2]bool, NewPRs, PRCompletions, PRUpdates, PRUpdates2 chan [][2]bool, PRFetchReq chan bool) {
 	for {
 		select {
 		case newPR := <-NewPRs:

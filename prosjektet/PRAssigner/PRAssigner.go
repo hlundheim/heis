@@ -36,15 +36,6 @@ func PRAFormatStates(elevState map[string]elevator.Elevator) map[string]PRAElevS
 	return PRAStates
 }
 
-// func PRAFormatStates(elevState map[string]elevator.Elevator) map[string]PRAElevState {
-// 	PRAStates := make(map[string]PRAElevState)
-// 	for birthday := range elevState {
-// 		a := PRAFormatState(elevState[birthday])
-// 		PRAStates[birthday] = a
-// 	}
-// 	return PRAStates
-// }
-
 func PRAFormatState(elevState elevator.Elevator) PRAElevState {
 	state := PRAElevState{}
 	if elevState.Behavior == 0 {
@@ -78,24 +69,10 @@ func AssignPRs(elevStates map[string]elevator.Elevator, PRs [][2]bool) map[strin
 		panic("OS not supported")
 	}
 
-	// fmt.Println(PRs)
-	// fmt.Println(elevStates)
-	// var input PRAInput
-	// input.PRs = PRs
-	// input.States = PRAFormatStates(elevStates)
-
 	input := PRAInput{
 		PRs:    PRs,
 		States: PRAFormatStates(elevStates),
 	}
-
-	// p:= elevator.Elevator{1, 1, 0, []bool{false,false,false,false}, [][2]bool{{false,false},{false,false},{true,true},{false,false}}}
-	// fmt.Println(p)
-
-	// input := PRAInput{
-	// 	PRs:    [][2]bool{{false,false},{true,true},{true,true},{false,false}},
-	// 	States: PRAFormatStates(map[string]elevator.Elevator{"2024-03-15T02:34:58.993442312+01:00":elevator.Elevator{1, 1, 0, []bool{false,false,false,false}, [][2]bool{{false,false},{false,false},{true,true},{false,false}}}, "2024-03-15T02:36:00.375212557+01:00":elevator.Elevator{2, 0, 2, []bool{false,false,false,false}, [][2]bool{{false,false},{false,false},{false,false},{false,false}}}, "2024-03-15T02:36:10.152316766+01:00": elevator.Elevator{2, 1, 1, []bool{true,false,false,false}, [][2]bool{{false,false},{true,true},{false,false},{false,false}}}}),
-	// }
 
 	jsonBytes, err := json.Marshal(input)
 	if err != nil {

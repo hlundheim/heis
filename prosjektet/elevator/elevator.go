@@ -1,11 +1,8 @@
 package elevator
 
 import (
-	"fmt"
 	"heis/DRStorage"
 )
-
-//type
 
 type ElevatorBehavior int
 
@@ -29,7 +26,6 @@ type Elevator struct {
 	Direction ElevatorDirection
 	DRList    []bool
 	PRList    [][2]bool
-	//legge til PRlist?
 }
 
 type ElevPacket struct {
@@ -39,32 +35,33 @@ type ElevPacket struct {
 
 var numFloors = 4
 
-// elevator functions
-
 func CreateElev() Elevator {
 	elev := Elevator{}
-	elev.DRList = make([]bool, numFloors)
-	elev.PRList = make([][2]bool, numFloors)
-	elev.DRList = GenerateDRArray(numFloors, elev.DRList)
-	GeneratePRArray(elev.PRList)
+	elev.DRList = GenerateDRArray()
+	//numFloors
+	elev.PRList = GenerateBlankPRs()
+	//numFloors
 	return elev
 }
 
-func GenerateDRArray(numFloors int, DRList []bool) []bool {
-	DRs := DRStorage.GetUncorruptedDRs()
-	if len(DRs) == 0 {
-		for i := 0; i < numFloors; i++ {
-			DRList[i] = false
-		}
-		return DRList
+// numFloors int
+func GenerateBlankPRs() [][2]bool {
+	PRs := make([][2]bool, numFloors)
+	for i := range PRs {
+		PRs[i] = [2]bool{}
 	}
-	fmt.Println(DRs)
-	return DRs
+	return PRs
 }
 
-func GeneratePRArray(PRList [][2]bool) [][2]bool {
-	for i := range PRList {
-		PRList[i] = [2]bool{}
+// numFloors int
+func GenerateDRArray() []bool {
+	DRs := DRStorage.GetUncorruptedDRs()
+	if len(DRs) != numFloors {
+		blankDRs := make([]bool, numFloors)
+		for i := range blankDRs {
+			blankDRs[i] = false
+		}
+		return blankDRs
 	}
-	return PRList
+	return DRs
 }

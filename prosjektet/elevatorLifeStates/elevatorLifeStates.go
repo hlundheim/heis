@@ -32,7 +32,6 @@ func CheckIfElder(liveElevs chan []string, liveElevFetchReq chan bool) bool {
 		elderBirthday := liveElevsAAA[0]
 		return (elderBirthday == LocalBirthday && len(liveElevsAAA) > 1)
 	}
-	//return (elderBirthday == LocalBirthday)
 }
 
 func sortElevsByAge(liveElevs []string) []string {

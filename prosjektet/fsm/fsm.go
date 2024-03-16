@@ -14,13 +14,6 @@ var doorTimer = 3 * time.Second
 var elev elevator.Elevator
 
 func initBetweenFloors() {
-	// if slices.Contains(elev.DRList, true) {
-	// 	elev.Behavior = elevator.EB_Idle
-	// } else {
-	// 	elev.Behavior = elevator.EB_Moving
-	// 	elev.Direction = elevator.ED_Down
-	// 	elevio.SetMotorDirection(elevio.MD_Down)
-	// }
 	elev.Behavior = elevator.EB_Moving
 	elev.Direction = elevator.ED_Down
 	elevio.SetMotorDirection(elevio.MD_Down)
@@ -105,8 +98,7 @@ func completeDR(DRCompletion chan bool) {
 
 func completePR(direction elevator.ElevatorDirection, PRCompletions chan [][2]bool) {
 	if elev.PRList[elev.Floor][direction] == true {
-		PRCompletion := make([][2]bool, numFloors)
-		elevator.GeneratePRArray(PRCompletion)
+		PRCompletion := elevator.GenerateBlankPRs()
 		PRCompletion[elev.Floor][direction] = true
 		PRCompletions <- PRCompletion
 	}
@@ -266,8 +258,7 @@ func handleButtonPress(button elevio.ButtonEvent, newPRs chan [][2]bool, DRAdded
 }
 
 func updateAndBroadcastPRList(button elevio.ButtonEvent, newPRs chan [][2]bool) {
-	broadcastPRList := make([][2]bool, numFloors)
-	elevator.GeneratePRArray(broadcastPRList)
+	broadcastPRList := elevator.GenerateBlankPRs()
 	switch button.Button {
 	case elevio.BT_HallDown:
 		broadcastPRList[button.Floor][1] = true
@@ -304,7 +295,7 @@ func floorHandling(drv_floors chan int, PRCompletions chan [][2]bool, DRCompleti
 	}
 }
 
-func handlePR(recievedPRs chan [][2]bool, PRsChange chan bool, globalPRs chan [][2]bool) {
+func handlePR(recievedPRs, globalPRs chan [][2]bool, PRsChange chan bool) {
 	for {
 		select {
 		case PRs := <-recievedPRs:
@@ -325,7 +316,7 @@ func detectElevStateChange(elevState chan elevator.Elevator) {
 	}
 }
 
-func checkIfStuck(PRCompletions chan [][2]bool, DRCompletion chan bool, PRCompletionOut chan [][2]bool, PRsChange chan bool, DRAdded chan bool) {
+func checkIfStuck(PRCompletions, PRCompletionOut chan [][2]bool, DRCompletion, PRsChange, DRAdded chan bool) {
 	timeOut := time.NewTimer(15000 * time.Millisecond)
 	for {
 		select {
@@ -344,7 +335,7 @@ func checkIfStuck(PRCompletions chan [][2]bool, DRCompletion chan bool, PRComple
 	}
 }
 
-func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletionsOut chan [][2]bool, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
+func Initialize(newPRs, recievedPRs, PRCompletionsOut, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
 	elev = elevator.CreateElev()
 	elevio.Init("localhost:23000", numFloors)
 	drv_floors := make(chan int)
@@ -359,10 +350,10 @@ func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletions
 	go buttonHandling(newPRs, DRAdded)
 	go floorHandling(drv_floors, PRCompletions, DRCompletion)
 	go elevio.PollObstructionSwitch(drv_obstr)
-	go handlePR(recievedPRs, PRsChange, globalPRs)
+	go handlePR(recievedPRs, globalPRs, PRsChange)
 	go handleJobsWaiting(PRCompletions, DRCompletion)
 	go detectElevStateChange(elevState)
-	go checkIfStuck(PRCompletions, DRCompletion, PRCompletionsOut, PRsChange, DRAdded)
+	go checkIfStuck(PRCompletions, PRCompletionsOut, DRCompletion, PRsChange, DRAdded)
 
 	//code for testing purposes
 	// for f := 0; f < numFloors; f++ {

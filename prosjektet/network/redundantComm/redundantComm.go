@@ -1,7 +1,6 @@
 package redundantComm
 
 import (
-	"fmt"
 	"heis/elevator"
 	"reflect"
 )
@@ -78,8 +77,6 @@ func RedundantRecieveMap(reciCh, sendCh chan map[string][][2]bool) {
 	for {
 		val := <-reciCh
 		if !reflect.DeepEqual(currentVal, val) {
-			fmt.Println(currentVal)
-			fmt.Println(val)
 			currentVal = val
 			if len(val) != 0 {
 				sendCh <- val

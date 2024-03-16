@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func PRUpdater(PRs *[][2]bool, PRUpdates chan [][2]bool, elderTakeover chan bool, shutdownConfirm chan bool) {
+func PRUpdater(PRs *[][2]bool, PRUpdates chan [][2]bool, elderTakeover, shutdownConfirm chan bool) {
 	for {
 		select {
 		case *PRs = <-PRUpdates:
@@ -21,7 +21,7 @@ func PRUpdater(PRs *[][2]bool, PRUpdates chan [][2]bool, elderTakeover chan bool
 	}
 }
 
-func blockUntilElder(liveElevs chan []string, liveElevsFetchReq chan bool, elderTakeover chan bool) {
+func blockUntilElder(liveElevs chan []string, liveElevsFetchReq, elderTakeover chan bool) {
 	time.Sleep(500 * time.Millisecond)
 	for {
 		if elevatorLifeStates.CheckIfElder(liveElevs, liveElevsFetchReq) {
@@ -35,9 +35,7 @@ func blockUntilElder(liveElevs chan []string, liveElevsFetchReq chan bool, elder
 
 func Initialize() {
 	port := 57000
-	numFloors := 4
-	PRs := make([][2]bool, numFloors)
-	PRs = elevator.GeneratePRArray(PRs)
+	PRs := elevator.GenerateBlankPRs()
 	PRUpdates := make(chan [][2]bool)
 	PRUpdatesRed := make(chan [][2]bool)
 	liveElevs := make(chan []string)
