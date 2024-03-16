@@ -29,14 +29,9 @@ func UpdatePRs(PRs [][2]bool, NewPRs chan [][2]bool, PRCompletions chan [][2]boo
 	for {
 		select {
 		case newPR := <-NewPRs:
-			//fmt.Println("PR: ", newPR)
-			//fmt.Println("PRs before: ", PRs)
 			PRs = addNewPR(PRs, newPR)
-			//fmt.Println("PRs after: ", PRs)
 		case PRCompletion := <-PRCompletions:
-			//fmt.Println("Comp before ", PRs)
 			PRs = completePR(PRs, PRCompletion)
-			//fmt.Println("Comp after ", PRs)
 		case <-PRFetchReq:
 			PRUpdates2 <- PRs
 		}

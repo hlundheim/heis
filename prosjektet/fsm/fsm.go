@@ -346,7 +346,7 @@ func checkIfStuck(PRCompletions chan [][2]bool, DRCompletion chan bool, PRComple
 
 func Initialize(newPRs chan [][2]bool, recievedPRs chan [][2]bool, PRCompletionsOut chan [][2]bool, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
 	elev = elevator.CreateElev()
-	elevio.Init("localhost:15657", numFloors)
+	elevio.Init("localhost:23000", numFloors)
 	drv_floors := make(chan int)
 	drv_obstr := make(chan bool)
 

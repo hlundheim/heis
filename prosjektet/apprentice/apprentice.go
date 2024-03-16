@@ -9,11 +9,11 @@ import (
 func updateReceivedPRs(distributedPRs chan map[string][][2]bool, birthday string, recievedPRs chan [][2]bool) {
 	for {
 		a := (<-distributedPRs)[birthday]
-		//fmt.Println("apprentice: ", a)
 		if len(a) > 0 {
 			recievedPRs <- a
 		} else {
 			recievedPRs <- [][2]bool{{false, false}, {false, false}, {false, false}, {false, false}}
+			//recievedPRs <- make([][2]bool,)
 		}
 	}
 }
