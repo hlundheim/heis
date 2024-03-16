@@ -2,6 +2,7 @@ package fsm
 
 import (
 	"fmt"
+	"heis/DRStorage"
 	"heis/elevator"
 	"heis/elevio"
 	"reflect"
@@ -89,7 +90,7 @@ func requestsInDirection() bool {
 func addDR(floor int, DRAdded chan bool) {
 	if elev.DRList[floor] == false {
 		elev.DRList[floor] = true
-		//DRStorage.WriteDRs(elev.DRList)
+		DRStorage.WriteDRs(elev.DRList)
 		DRAdded <- true
 	}
 }
@@ -97,7 +98,7 @@ func addDR(floor int, DRAdded chan bool) {
 func completeDR(DRCompletion chan bool) {
 	if elev.DRList[elev.Floor] == true {
 		elev.DRList[elev.Floor] = false
-		//DRStorage.WriteDRs(elev.DRList)
+		DRStorage.WriteDRs(elev.DRList)
 		DRCompletion <- true
 	}
 }
