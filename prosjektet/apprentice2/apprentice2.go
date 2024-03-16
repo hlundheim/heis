@@ -6,7 +6,6 @@ import (
 	"heis/elevator"
 	"heis/elevatorLifeStates"
 	"heis/network/bcast"
-	"heis/network/redundantComm"
 	"time"
 )
 
@@ -49,7 +48,7 @@ func Initialize() {
 	go bcast.Receiver(port+5, PRUpdates)
 	go PRUpdater(&PRs, PRUpdatesRed, elderTakeover, shutdownConfirm)
 	go elevatorLifeStates.Initialize(liveElevs, liveElevsFetchReq)
-	go redundantComm.RedundantRecieveBoolArray(PRUpdates, PRUpdatesRed)
+	//go redundantComm.RedundantRecieveBoolArray(PRUpdates, PRUpdatesRed)
 
 	blockUntilElder(liveElevs, liveElevsFetchReq, elderTakeover)
 	<-shutdownConfirm
