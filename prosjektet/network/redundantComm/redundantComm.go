@@ -6,7 +6,7 @@ import (
 	"reflect"
 )
 
-var times int = 100
+var times int = 1
 
 func RedundantSendBoolArray(sendCh chan [][2]bool, reciCh chan [][2]bool) {
 	for {
