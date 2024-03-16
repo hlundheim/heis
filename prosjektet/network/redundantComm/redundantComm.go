@@ -6,7 +6,7 @@ import (
 	"reflect"
 )
 
-var times int = 1
+var times int = 100
 
 func RedundantSendBoolArray(sendCh chan [][2]bool, reciCh chan [][2]bool) {
 	for {
@@ -15,7 +15,7 @@ func RedundantSendBoolArray(sendCh chan [][2]bool, reciCh chan [][2]bool) {
 			sendCh <- val
 		}
 		for i := 0; i < times; i++ {
-			sendCh <- make([][2]bool, 1)
+			sendCh <- make([][2]bool, 0)
 		}
 	}
 }
@@ -29,7 +29,7 @@ func RedundantRecieveBoolArray(reciCh chan [][2]bool, sendCh chan [][2]bool) {
 			fmt.Println(currentVal)
 			fmt.Println(val)
 			currentVal = val
-			if len(val) == 1 {
+			if len(val) == 0 {
 				sendCh <- val
 			}
 		}
