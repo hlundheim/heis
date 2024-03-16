@@ -63,6 +63,32 @@ func RedundantRecieveElevPacket(reciCh, sendCh chan elevator.ElevPacket) {
 	}
 }
 
+func RedundantSendMap(sendCh, reciCh chan map[string][][2]bool) {
+	for {
+		val := <-reciCh
+		for i := 0; i < times; i++ {
+			sendCh <- val
+		}
+		for i := 0; i < times; i++ {
+			sendCh <- make(map[string][][2]bool, 0)
+		}
+	}
+}
+
+func RedundantRecieveMap(reciCh, sendCh chan map[string][][2]bool) {
+	currentVal := <-reciCh
+	sendCh <- currentVal
+	for {
+		val := <-reciCh
+		if !reflect.DeepEqual(currentVal, val) {
+			currentVal = val
+			if len(val) == 0 {
+				sendCh <- val
+			}
+		}
+	}
+}
+
 // func reader(reciCh chan [][2]bool) {
 // 	for {
 // 		fmt.Println("rec ", <-reciCh)

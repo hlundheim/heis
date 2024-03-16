@@ -67,6 +67,7 @@ func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool, PRs [][2]b
 	elevInfo := make(chan elevator.ElevPacket)
 	elevInfoRed := make(chan elevator.ElevPacket)
 	distributedPRs := make(chan map[string][][2]bool)
+	distributedPRsRed := make(chan map[string][][2]bool)
 	elevStates := make(chan map[string]elevator.Elevator)
 	PRUpdates2 := make(chan [][2]bool)
 	PRFetchReq := make(chan bool)
@@ -75,7 +76,8 @@ func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool, PRs [][2]b
 	go redundantComm.RedundantRecieveElevPacket(elevInfo, elevInfoRed)
 	go bcast.Receiver(port+1, elevInfo)
 	go bcast.Transmitter(port+2, distributedPRs)
-	go DistributePRs(distributedPRs, elevStates, PRUpdates2, PRFetchReq)
+	go redundantComm.RedundantSendMap(distributedPRsRed, distributedPRs)
+	go DistributePRs(distributedPRsRed, elevStates, PRUpdates2, PRFetchReq)
 	go MaintainElevStates(elevInfoRed, liveElevs, liveElevsFetchReq, elevStates)
 	go checkIfDisc(liveElevs, liveElevsFetchReq)
 }
