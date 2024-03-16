@@ -20,15 +20,14 @@ func initBetweenFloors() {
 }
 
 func initElev(drv_floors chan int) {
-	floor := elevio.GetFloor()
-	if floor == -1 {
+	elev.Floor = elevio.GetFloor()
+	if elev.Floor == -1 {
 		initBetweenFloors()
-	} else if floor != -1 {
+	} else if elev.Floor != -1 {
 		elev.Behavior = elevator.EB_Idle
 		elev.Direction = elevator.ED_Stop
 		elevio.SetMotorDirection(elevio.MD_Stop)
-		elev.Floor = floor
-		elevio.SetFloorIndicator(floor)
+		elevio.SetFloorIndicator(elev.Floor)
 	}
 }
 
@@ -44,7 +43,6 @@ func atFloorArrival(PRCompletions chan [][2]bool, DRCompletion chan bool) {
 		if requestsShouldStop() {
 			go stopAtFloor(PRCompletions, DRCompletion)
 		} else if !requestsAbove() && !requestsBelow() {
-			//|| elev.Floor == 0
 			elevio.SetMotorDirection(elevio.MD_Stop)
 			elev.Behavior = elevator.EB_Idle
 			elev.Direction = elevator.ED_Stop
@@ -288,6 +286,15 @@ func floorHandling(drv_floors chan int, PRCompletions chan [][2]bool, DRCompleti
 	go elevio.PollFloorSensor(drv_floors)
 	for {
 		newFloor := <-drv_floors
+		if elev.Floor == -1 {
+			elevio.SetFloorIndicator(elev.Floor)
+			if elev.Floor == numFloors-1 {
+				elev.Direction = elevator.ED_Down
+			} else if elev.Floor == 0 {
+				elev.Direction = elevator.ED_Up
+			}
+			go stopAtFloor(PRCompletions, DRCompletion)
+		}
 		if newFloor != -1 {
 			elev.Floor = newFloor
 			atFloorArrival(PRCompletions, DRCompletion)
