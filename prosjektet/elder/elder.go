@@ -6,6 +6,7 @@ import (
 	"heis/elevator"
 	"heis/elevatorLifeStates"
 	"heis/network/bcast"
+	"heis/network/redundantComm"
 	"time"
 )
 
@@ -64,15 +65,17 @@ func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map
 func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool, PRs [][2]bool) {
 	port := 57000
 	elevInfo := make(chan elevator.ElevPacket)
+	elevInfoRed := make(chan elevator.ElevPacket)
 	distributedPRs := make(chan map[string][][2]bool)
 	elevStates := make(chan map[string]elevator.Elevator)
 	PRUpdates2 := make(chan [][2]bool)
 	PRFetchReq := make(chan bool)
 
 	go PRSyncElder.Initialize(PRUpdates2, PRs, PRFetchReq)
+	go redundantComm.RedundantRecieveElevPacket(elevInfo, elevInfoRed)
 	go bcast.Receiver(port+1, elevInfo)
 	go bcast.Transmitter(port+2, distributedPRs)
 	go DistributePRs(distributedPRs, elevStates, PRUpdates2, PRFetchReq)
-	go MaintainElevStates(elevInfo, liveElevs, liveElevsFetchReq, elevStates)
+	go MaintainElevStates(elevInfoRed, liveElevs, liveElevsFetchReq, elevStates)
 	go checkIfDisc(liveElevs, liveElevsFetchReq)
 }
