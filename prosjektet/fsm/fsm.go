@@ -290,6 +290,7 @@ func floorHandling(drv_floors chan int, PRCompletions chan [][2]bool, DRCompleti
 	for {
 		newFloor := <-drv_floors
 		if elev.Floor == -1 {
+			elev.Floor = newFloor
 			elevio.SetFloorIndicator(elev.Floor)
 			if elev.Floor == numFloors-1 {
 				elev.Direction = elevator.ED_Down
