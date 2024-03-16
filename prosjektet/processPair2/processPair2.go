@@ -1,7 +1,6 @@
 package processPair2
 
 import (
-	"fmt"
 	"heis/utilities/errorHandler"
 	"net"
 	"os/exec"
@@ -13,23 +12,21 @@ func primaryBroadcast(primarySocket net.Conn) {
 	for {
 		_, err := primarySocket.Write([]byte("hei"))
 		errorHandler.HandleError(err)
-		time.Sleep(100 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
 func Initialize() {
 	ip := "localhost"
-	port := ":17000"
+	port := ":57007"
 	a, err := net.ResolveUDPAddr("udp4", ip+port)
 	errorHandler.HandleError(err)
 	backupSocket, err := net.ListenUDP("udp4", a)
 	errorHandler.HandleError(err)
-	fmt.Println("Client started")
 	for {
-		backupSocket.SetReadDeadline(time.Now().Add(2000 * time.Millisecond))
+		backupSocket.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 		buffer := make([]byte, 1024)
-		n, _, err := backupSocket.ReadFromUDP(buffer)
-		fmt.Println(buffer[:n])
+		_, _, err := backupSocket.ReadFromUDP(buffer)
 		if err != nil {
 			break
 		}
@@ -37,8 +34,7 @@ func Initialize() {
 	}
 
 	backupSocket.Close()
-	broadcastIP := "localhost:17000"
-	addr, err := net.ResolveUDPAddr("udp4", broadcastIP)
+	addr, err := net.ResolveUDPAddr("udp4", ip+port)
 	errorHandler.HandleError(err)
 	primarySocket, err := net.DialUDP("udp4", nil, addr)
 	errorHandler.HandleError(err)
@@ -51,11 +47,5 @@ func Initialize() {
 	default:
 		panic("OS not supported")
 	}
-	for {
-		_, err := primarySocket.Write([]byte("hei"))
-		errorHandler.HandleError(err)
-		time.Sleep(100 * time.Second)
-	}
 	go primaryBroadcast(primarySocket)
-
 }

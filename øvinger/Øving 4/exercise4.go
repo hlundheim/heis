@@ -55,8 +55,8 @@ func main() {
 
 	//Creating backup
 	fmt.Println("... creating new backup")
-	exec.Command("gnome-terminal", "--", "go", "run", "exercise4.go").Run()
-	//exec.Command("cmd", "/C", "start", "powershell", "go", "run", "exercise4.go").Run()
+	//exec.Command("gnome-terminal", "--", "go", "run", "exercise4.go").Run()
+	exec.Command("cmd", "/C", "start", "powershell", "go", "run", "exercise4.go").Run()
 	fmt.Println("Resuming counting from ", countingNr)
 
 	for {
