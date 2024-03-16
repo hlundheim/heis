@@ -27,8 +27,6 @@ func RedundantRecieveBoolArray(reciCh, sendCh chan [][2]bool) {
 	for {
 		val := <-reciCh
 		if !reflect.DeepEqual(currentVal, val) {
-			fmt.Println(currentVal)
-			fmt.Println(val)
 			currentVal = val
 			if len(val) == 0 {
 				sendCh <- val
@@ -58,7 +56,7 @@ func RedundantRecieveElevPacket(reciCh, sendCh chan elevator.ElevPacket) {
 			fmt.Println(currentVal)
 			fmt.Println(val)
 			currentVal = val
-			if val.Birthday == "test" {
+			if val.Birthday != "test" {
 				sendCh <- val
 			}
 		}
