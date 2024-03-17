@@ -1,9 +1,10 @@
 package elder
 
 import (
+	"fmt"
 	"heis/PRAssigner"
 	"heis/PRSyncElder"
-	"heis/elevator"
+	"heis/elevData"
 	"heis/elevatorLifeStates"
 	"heis/network/bcast"
 	"heis/network/redundantComm"
@@ -12,14 +13,16 @@ import (
 
 func checkIfDisc(liveElevs chan []string, liveElevsFetchReq chan bool) {
 	for {
+		fmt.Println("ja")
 		if !elevatorLifeStates.CheckIfElder(liveElevs, liveElevsFetchReq) {
+			fmt.Println("jippi")
 			panic("du er disconnected")
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
 }
 
-func removeDiscElevs(states map[string]elevator.Elevator, liveElevs []string) map[string]elevator.Elevator {
+func removeDiscElevs(states map[string]elevData.Elevator, liveElevs []string) map[string]elevData.Elevator {
 	for Birthday := range states {
 		flag := false
 		for _, birthday := range liveElevs {
@@ -34,8 +37,8 @@ func removeDiscElevs(states map[string]elevator.Elevator, liveElevs []string) ma
 	return states
 }
 
-func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevs chan []string, liveElevsFetchReq chan bool, elevStates chan map[string]elevator.Elevator) {
-	states := make(map[string]elevator.Elevator)
+func MaintainElevStates(elevInfo chan elevData.ElevPacket, liveElevs chan []string, liveElevsFetchReq chan bool, elevStates chan map[string]elevData.Elevator) {
+	states := make(map[string]elevData.Elevator)
 	for {
 		currentInfo := <-elevInfo
 		states[currentInfo.Birthday] = currentInfo.ElevInfo
@@ -45,7 +48,7 @@ func MaintainElevStates(elevInfo chan elevator.ElevPacket, liveElevs chan []stri
 	}
 }
 
-func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map[string]elevator.Elevator, PRUpdates2 chan [][2]bool, PRFetchReq chan bool) {
+func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map[string]elevData.Elevator, PRUpdates2 chan [][2]bool, PRFetchReq chan bool) {
 	for {
 		currentElevState := <-elevStates
 		PRFetchReq <- true
@@ -64,20 +67,20 @@ func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map
 
 func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool, PRs [][2]bool) {
 	port := 57000
-	elevInfo := make(chan elevator.ElevPacket)
-	elevInfoRed := make(chan elevator.ElevPacket)
+	elevInfo := make(chan elevData.ElevPacket)
+	elevInfoRed := make(chan elevData.ElevPacket)
 	distributedPRs := make(chan map[string][][2]bool)
 	distributedPRsRed := make(chan map[string][][2]bool)
-	elevStates := make(chan map[string]elevator.Elevator)
+	elevStates := make(chan map[string]elevData.Elevator)
 	PRUpdates2 := make(chan [][2]bool)
 	PRFetchReq := make(chan bool)
 
 	go PRSyncElder.Initialize(PRUpdates2, PRs, PRFetchReq)
-	go redundantComm.RedundantRecieveElevPacket(elevInfo, elevInfoRed)
-	go bcast.Receiver(port+1, elevInfo)
+	go bcast.Receiver(port+1, elevInfoRed)
+	go redundantComm.RedundantRecieveElevPacket(elevInfoRed, elevInfo)
+	go redundantComm.RedundantSendMap(distributedPRs, distributedPRsRed)
 	go bcast.Transmitter(port+2, distributedPRsRed)
-	go redundantComm.RedundantSendMap(distributedPRsRed, distributedPRs)
 	go DistributePRs(distributedPRs, elevStates, PRUpdates2, PRFetchReq)
-	go MaintainElevStates(elevInfoRed, liveElevs, liveElevsFetchReq, elevStates)
+	go MaintainElevStates(elevInfo, liveElevs, liveElevsFetchReq, elevStates)
 	go checkIfDisc(liveElevs, liveElevsFetchReq)
 }

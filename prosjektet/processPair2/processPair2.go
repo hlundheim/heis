@@ -1,7 +1,7 @@
 package processPair2
 
 import (
-	"heis/utilities/errorHandler"
+	"heis/utilities/utilities"
 	"net"
 	"os/exec"
 	"runtime"
@@ -11,7 +11,7 @@ import (
 func primaryBroadcast(primarySocket net.Conn) {
 	for {
 		_, err := primarySocket.Write([]byte("hei"))
-		errorHandler.HandleError(err)
+		utilities.HandleError(err)
 		time.Sleep(100 * time.Millisecond)
 	}
 }
@@ -20,9 +20,9 @@ func Initialize() {
 	ip := "localhost"
 	port := ":57007"
 	a, err := net.ResolveUDPAddr("udp4", ip+port)
-	errorHandler.HandleError(err)
+	utilities.HandleError(err)
 	backupSocket, err := net.ListenUDP("udp4", a)
-	errorHandler.HandleError(err)
+	utilities.HandleError(err)
 	for {
 		backupSocket.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 		buffer := make([]byte, 1024)
@@ -35,9 +35,9 @@ func Initialize() {
 
 	backupSocket.Close()
 	addr, err := net.ResolveUDPAddr("udp4", ip+port)
-	errorHandler.HandleError(err)
+	utilities.HandleError(err)
 	primarySocket, err := net.DialUDP("udp4", nil, addr)
-	errorHandler.HandleError(err)
+	utilities.HandleError(err)
 
 	switch runtime.GOOS {
 	case "linux":

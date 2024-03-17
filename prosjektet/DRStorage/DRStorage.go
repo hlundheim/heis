@@ -2,7 +2,7 @@ package DRStorage
 
 import (
 	"encoding/json"
-	"heis/utilities/errorHandler"
+	"heis/utilities"
 	"os"
 	"reflect"
 	"strconv"
@@ -14,26 +14,26 @@ func WriteDRs(DRs []bool) {
 	num := 3
 	for i := 1; i <= num; i++ {
 		file, err := os.Create("./DRStorage/DRs" + strconv.Itoa(i) + ".txt")
-		errorHandler.HandleError(err)
+		utilities.HandleError(err)
 		defer file.Close()
 
 		data, err := json.Marshal(DRs)
-		errorHandler.HandleError(err)
+		utilities.HandleError(err)
 
 		_, err = file.Write(data)
-		errorHandler.HandleError(err)
+		utilities.HandleError(err)
 	}
 }
 
 func readDRs(filename string) []bool {
 	file, err := os.Open(filename)
-	errorHandler.HandleError(err)
+	utilities.HandleError(err)
 	defer file.Close()
 
 	var readDRs []bool
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&readDRs); err != nil {
-		errorHandler.HandleError(err)
+		utilities.HandleError(err)
 	}
 	return readDRs
 }

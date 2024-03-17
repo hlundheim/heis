@@ -3,7 +3,7 @@ package main
 import (
 	"heis/apprentice"
 	"heis/apprentice2"
-	"heis/elevator"
+	"heis/elevData"
 	"heis/elevatorLifeStates"
 	"heis/fsm"
 	"time"
@@ -14,7 +14,7 @@ func main() {
 	recievedPRs := make(chan [][2]bool)
 	PRCompletions := make(chan [][2]bool)
 	globalPRs := make(chan [][2]bool)
-	elevState := make(chan elevator.Elevator)
+	elevState := make(chan elevData.Elevator)
 
 	//processPair2.Initialize()
 	go apprentice2.Initialize()

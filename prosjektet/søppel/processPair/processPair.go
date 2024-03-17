@@ -2,7 +2,7 @@ package processPair
 
 import (
 	"heis/network/bcast"
-	"heis/utilities/errorHandler"
+	"heis/utilities/utilities"
 	"net"
 	"os/exec"
 	"runtime"
@@ -11,7 +11,7 @@ import (
 
 func getMacAddr() string {
 	ifas, err := net.Interfaces()
-	errorHandler.HandleError(err)
+	utilities.HandleError(err)
 	return ifas[1].HardwareAddr.String()
 }
 

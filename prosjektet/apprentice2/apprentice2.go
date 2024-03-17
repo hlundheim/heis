@@ -3,12 +3,20 @@ package apprentice2
 import (
 	"fmt"
 	"heis/elder"
-	"heis/elevator"
+	"heis/elevData"
 	"heis/elevatorLifeStates"
 	"heis/network/bcast"
 	"heis/network/redundantComm"
 	"time"
 )
+
+func GenerateBlankPRs() [][2]bool {
+	PRs := make([][2]bool, elevData.NumFloors)
+	for i := range PRs {
+		PRs[i] = [2]bool{}
+	}
+	return PRs
+}
 
 func PRUpdater(PRs *[][2]bool, PRUpdates chan [][2]bool, elderTakeover, shutdownConfirm chan bool) {
 	for {
@@ -35,7 +43,7 @@ func blockUntilElder(liveElevs chan []string, liveElevsFetchReq, elderTakeover c
 
 func Initialize() {
 	port := 57000
-	PRs := elevator.GenerateBlankPRs()
+	PRs := GenerateBlankPRs()
 	PRUpdates := make(chan [][2]bool)
 	PRUpdatesRed := make(chan [][2]bool)
 	liveElevs := make(chan []string)
@@ -43,10 +51,10 @@ func Initialize() {
 	elderTakeover := make(chan bool)
 	shutdownConfirm := make(chan bool)
 
-	go bcast.Receiver(port+5, PRUpdates)
-	go PRUpdater(&PRs, PRUpdatesRed, elderTakeover, shutdownConfirm)
+	go bcast.Receiver(port+5, PRUpdatesRed)
+	go redundantComm.RedundantRecieveBoolArray(PRUpdatesRed, PRUpdates)
+	go PRUpdater(&PRs, PRUpdates, elderTakeover, shutdownConfirm)
 	go elevatorLifeStates.Initialize(liveElevs, liveElevsFetchReq)
-	go redundantComm.RedundantRecieveBoolArray(PRUpdates, PRUpdatesRed)
 
 	blockUntilElder(liveElevs, liveElevsFetchReq, elderTakeover)
 	<-shutdownConfirm

@@ -3,7 +3,7 @@ package elevatorLifeStates
 import (
 	"fmt"
 	"heis/network/peers"
-	"heis/utilities/errorHandler"
+	"heis/utilities"
 	"time"
 )
 
@@ -45,7 +45,7 @@ func sortElevsByAge(liveElevs []string) []string {
 				fmt.Println("ÅNEI DE ER IKKE SORTED HÅVARD DU ER DUM OG SLEM OG STYGG")
 			}
 		}
-		errorHandler.HandleError(err)
+		utilities.HandleError(err)
 	}
 	for i, v := range elevsByAge {
 		liveElevs[i] = v.Format(time.RFC3339Nano)

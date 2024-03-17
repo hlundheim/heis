@@ -3,7 +3,7 @@ package PRAssigner
 import (
 	"encoding/json"
 	"fmt"
-	"heis/elevator"
+	"heis/elevData"
 	"os/exec"
 	"runtime"
 	"sync"
@@ -21,7 +21,7 @@ type PRAInput struct {
 	States map[string]PRAElevState `json:"states"`
 }
 
-func PRAFormatStates(elevState map[string]elevator.Elevator) map[string]PRAElevState {
+func PRAFormatStates(elevState map[string]elevData.Elevator) map[string]PRAElevState {
 	mutex := &sync.Mutex{}
 	mutex.Lock()
 	PRAStates := make(map[string]PRAElevState)
@@ -36,7 +36,7 @@ func PRAFormatStates(elevState map[string]elevator.Elevator) map[string]PRAElevS
 	return PRAStates
 }
 
-func PRAFormatState(elevState elevator.Elevator) PRAElevState {
+func PRAFormatState(elevState elevData.Elevator) PRAElevState {
 	state := PRAElevState{}
 	if elevState.Behavior == 0 {
 		state.Behavior = "idle"
@@ -57,7 +57,7 @@ func PRAFormatState(elevState elevator.Elevator) PRAElevState {
 	return state
 }
 
-func AssignPRs(elevStates map[string]elevator.Elevator, PRs [][2]bool) map[string][][2]bool {
+func AssignPRs(elevStates map[string]elevData.Elevator, PRs [][2]bool) map[string][][2]bool {
 
 	praExecutable := ""
 	switch runtime.GOOS {

@@ -3,19 +3,25 @@ package fsm
 import (
 	"fmt"
 	"heis/DRStorage"
-	"heis/elevator"
+	"heis/elevData"
 	"heis/elevio"
+	"heis/utilities"
 	"reflect"
 	"time"
 )
 
-var numFloors = 4
-var doorTimer = 3 * time.Second
-var elev elevator.Elevator
+var elev elevData.Elevator
+
+func createElev() elevData.Elevator {
+	elev := elevData.Elevator{}
+	elev.DRList = generateDRArray()
+	elev.PRList = generateBlankPRs()
+	return elev
+}
 
 func initBetweenFloors() {
-	elev.Behavior = elevator.EB_Moving
-	elev.Direction = elevator.ED_Down
+	elev.Behavior = elevData.EB_Moving
+	elev.Direction = elevData.ED_Down
 	elevio.SetMotorDirection(elevio.MD_Down)
 }
 
@@ -24,8 +30,8 @@ func initElev(drv_floors chan int) {
 	if elev.Floor == -1 {
 		initBetweenFloors()
 	} else if elev.Floor != -1 {
-		elev.Behavior = elevator.EB_Idle
-		elev.Direction = elevator.ED_Stop
+		elev.Behavior = elevData.EB_Idle
+		elev.Direction = elevData.ED_Stop
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		elevio.SetFloorIndicator(elev.Floor)
 	}
@@ -36,53 +42,27 @@ func initElev(drv_floors chan int) {
 
 func atFloorArrival(PRCompletions chan [][2]bool, DRCompletion chan bool) {
 	elevio.SetFloorIndicator(elev.Floor)
-	if elev.Floor == numFloors-1 {
-		elev.Direction = elevator.ED_Down
+	if elev.Floor == elevData.NumFloors-1 {
+		elev.Direction = elevData.ED_Down
 	} else if elev.Floor == 0 {
-		elev.Direction = elevator.ED_Up
+		elev.Direction = elevData.ED_Up
 	}
 	switch elev.Behavior {
-	case elevator.EB_Moving:
-		if requestsShouldStop() {
+	case elevData.EB_Moving:
+		if requestsShouldStop(elev) {
 			go stopAtFloor(PRCompletions, DRCompletion)
-		} else if !requestsAbove() && !requestsBelow() {
+		} else if !requestsAbove(elev) && !requestsBelow(elev) {
 			elevio.SetMotorDirection(elevio.MD_Stop)
-			elev.Behavior = elevator.EB_Idle
-			elev.Direction = elevator.ED_Stop
+			elev.Behavior = elevData.EB_Idle
+			elev.Direction = elevData.ED_Stop
 		}
 	default:
 		break
 	}
 }
 
-func requestsShouldStop() bool {
-	if elev.DRList[elev.Floor] || (elev.PRList[elev.Floor][elev.Direction] || (!elev.PRList[elev.Floor][elev.Direction] && elev.PRList[elev.Floor][getOppositeDirection()] && !requestsInDirection())) {
-		return true
-	} else {
-		return false
-	}
-}
-
-func getOppositeDirection() elevator.ElevatorDirection {
-	if elev.Direction == elevator.ED_Up {
-		return elevator.ED_Down
-	} else {
-		return elevator.ED_Up
-	}
-}
-
-func requestsInDirection() bool {
-	if elev.Direction == elevator.ED_Up {
-		return requestsAbove()
-	} else if elev.Direction == elevator.ED_Down {
-		return requestsBelow()
-	} else {
-		return false
-	}
-}
-
 func addDR(floor int, DRAdded chan bool) {
-	if elev.DRList[floor] == false {
+	if !elev.DRList[floor] {
 		elev.DRList[floor] = true
 		DRStorage.WriteDRs(elev.DRList)
 		DRAdded <- true
@@ -90,16 +70,16 @@ func addDR(floor int, DRAdded chan bool) {
 }
 
 func completeDR(DRCompletion chan bool) {
-	if elev.DRList[elev.Floor] == true {
+	if elev.DRList[elev.Floor] {
 		elev.DRList[elev.Floor] = false
 		DRStorage.WriteDRs(elev.DRList)
 		DRCompletion <- true
 	}
 }
 
-func completePR(direction elevator.ElevatorDirection, PRCompletions chan [][2]bool) {
-	if elev.PRList[elev.Floor][direction] == true {
-		PRCompletion := elevator.GenerateBlankPRs()
+func completePR(direction elevData.ElevatorDirection, PRCompletions chan [][2]bool) {
+	if elev.PRList[elev.Floor][direction] {
+		PRCompletion := generateBlankPRs()
 		PRCompletion[elev.Floor][direction] = true
 		PRCompletions <- PRCompletion
 	}
@@ -109,15 +89,15 @@ func clearRequestsAtCurrentFloor(PRCompletions chan [][2]bool, DRCompletion chan
 	completeDR(DRCompletion)
 	elevio.SetButtonLamp(elevio.BT_Cab, elev.Floor, false)
 	switch elev.Direction {
-	case elevator.ED_Stop:
-		completePR(elevator.ED_Up, PRCompletions)
-		completePR(elevator.ED_Down, PRCompletions)
+	case elevData.ED_Stop:
+		completePR(elevData.ED_Up, PRCompletions)
+		completePR(elevData.ED_Down, PRCompletions)
 	default:
 		if elev.PRList[elev.Floor][elev.Direction] {
 			completePR(elev.Direction, PRCompletions)
-		} else if elev.PRList[elev.Floor][getOppositeDirection()] && !elev.PRList[elev.Floor][elev.Direction] && !requestsInDirection() {
-			completePR(getOppositeDirection(), PRCompletions)
-			elev.Direction = getOppositeDirection()
+		} else if elev.PRList[elev.Floor][getOppositeDirection(elev)] && !elev.PRList[elev.Floor][elev.Direction] && !requestsInDirection(elev) {
+			completePR(getOppositeDirection(elev), PRCompletions)
+			elev.Direction = getOppositeDirection(elev)
 		}
 	}
 }
@@ -126,60 +106,50 @@ func stopAtFloor(PRCompletions chan [][2]bool, DRCompletion chan bool) {
 	elevio.SetMotorDirection(elevio.MD_Stop)
 	clearRequestsAtCurrentFloor(PRCompletions, DRCompletion)
 	elevio.SetDoorOpenLamp(true)
-	elev.Behavior = elevator.EB_DoorOpen
-	time.Sleep(doorTimer)
+	elev.Behavior = elevData.EB_DoorOpen
+	time.Sleep(elevData.DoorTimer)
 	if elevio.GetObstruction() {
 		for elevio.GetObstruction() {
 			elevio.SetDoorOpenLamp(true)
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
-	if elev.Direction != elevator.ED_Stop && (elev.PRList[elev.Floor][getOppositeDirection()] && !elev.PRList[elev.Floor][elev.Direction] && !requestsInDirection()) {
+	if elev.Direction != elevData.ED_Stop && (elev.PRList[elev.Floor][getOppositeDirection(elev)] && !elev.PRList[elev.Floor][elev.Direction] && !requestsInDirection(elev)) {
 		clearRequestsAtCurrentFloor(PRCompletions, DRCompletion)
-		time.Sleep(3 * time.Second)
+		time.Sleep(elevData.DoorTimer)
 	}
 	go checkForJobsInDirecton(PRCompletions, DRCompletion)
 }
 
 func checkForJobsInDirecton(PRCompletions chan [][2]bool, DRCompletion chan bool) {
-	if checkDRHere() {
+	if checkDRHere(elev) {
 		go stopAtFloor(PRCompletions, DRCompletion)
-	} else if requestsInDirection() {
+	} else if requestsInDirection(elev) {
 		elevio.SetDoorOpenLamp(false)
-		elev.Behavior = elevator.EB_Moving
-		elevio.SetMotorDirection(convertEDtoMD())
+		elev.Behavior = elevData.EB_Moving
+		elevio.SetMotorDirection(utilities.ConvertEDtoMD(elev.Direction))
 	} else {
 		elevio.SetDoorOpenLamp(false)
-		elev.Behavior = elevator.EB_Idle
-		elev.Direction = elevator.ED_Stop
-	}
-}
-
-func convertEDtoMD() elevio.MotorDirection {
-	if elev.Direction == elevator.ED_Up {
-		return elevio.MD_Up
-	} else if elev.Direction == elevator.ED_Down {
-		return elevio.MD_Down
-	} else {
-		return elevio.MD_Stop
+		elev.Behavior = elevData.EB_Idle
+		elev.Direction = elevData.ED_Stop
 	}
 }
 
 func handleJobsWaiting(PRCompletions chan [][2]bool, DRCompletion chan bool) {
 	for {
-		if hasJobsWaiting() {
+		if hasJobsWaiting(elev) {
 			switch elev.Behavior {
-			case elevator.EB_Idle:
-				if requestsHere() {
+			case elevData.EB_Idle:
+				if requestsHere(elev) {
 					go stopAtFloor(PRCompletions, DRCompletion)
-				} else if requestsAbove() {
-					elev.Behavior = elevator.EB_Moving
-					elev.Direction = elevator.ED_Up
-					elevio.SetMotorDirection(convertEDtoMD())
-				} else if requestsBelow() {
-					elev.Behavior = elevator.EB_Moving
-					elev.Direction = elevator.ED_Down
-					elevio.SetMotorDirection(convertEDtoMD())
+				} else if requestsAbove(elev) {
+					elev.Behavior = elevData.EB_Moving
+					elev.Direction = elevData.ED_Up
+					elevio.SetMotorDirection(utilities.ConvertEDtoMD(elev.Direction))
+				} else if requestsBelow(elev) {
+					elev.Behavior = elevData.EB_Moving
+					elev.Direction = elevData.ED_Down
+					elevio.SetMotorDirection(utilities.ConvertEDtoMD(elev.Direction))
 				}
 			default:
 				break
@@ -187,61 +157,6 @@ func handleJobsWaiting(PRCompletions chan [][2]bool, DRCompletion chan bool) {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
-}
-
-func hasJobsWaiting() bool {
-	jobsWaiting := false
-	for i := 0; i < len(elev.DRList); i++ {
-		if elev.DRList[i] {
-			jobsWaiting = true
-		}
-	}
-	for i := 0; i < len(elev.PRList); i++ {
-		for j := 0; j < 2; j++ {
-			if elev.PRList[i][j] {
-				jobsWaiting = true
-			}
-		}
-	}
-	return jobsWaiting
-}
-
-func requestsAbove() bool {
-	for i := elev.Floor + 1; i < numFloors; i++ {
-		if elev.DRList[i] {
-			return true
-		} else if elev.PRList[i][0] || elev.PRList[i][1] {
-			return true
-		}
-	}
-	return false
-}
-
-func requestsBelow() bool {
-	for i := 0; i < elev.Floor; i++ {
-		if elev.DRList[i] {
-			return true
-		} else if elev.PRList[i][0] || elev.PRList[i][1] {
-			return true
-		}
-	}
-	return false
-}
-
-func checkDRHere() bool {
-	return elev.DRList[elev.Floor]
-}
-
-func requestsHere() bool {
-	if elev.DRList[elev.Floor] {
-		return true
-	}
-	for j := 0; j < 2; j++ {
-		if elev.PRList[elev.Floor][j] {
-			return true
-		}
-	}
-	return false
 }
 
 func handleButtonPress(button elevio.ButtonEvent, newPRs chan [][2]bool, DRAdded chan bool) {
@@ -259,7 +174,7 @@ func handleButtonPress(button elevio.ButtonEvent, newPRs chan [][2]bool, DRAdded
 }
 
 func updateAndBroadcastPRList(button elevio.ButtonEvent, newPRs chan [][2]bool) {
-	broadcastPRList := elevator.GenerateBlankPRs()
+	broadcastPRList := generateBlankPRs()
 	switch button.Button {
 	case elevio.BT_HallDown:
 		broadcastPRList[button.Floor][1] = true
@@ -292,10 +207,10 @@ func floorHandling(drv_floors chan int, PRCompletions chan [][2]bool, DRCompleti
 		if elev.Floor == -1 {
 			elev.Floor = newFloor
 			elevio.SetFloorIndicator(elev.Floor)
-			if elev.Floor == numFloors-1 {
-				elev.Direction = elevator.ED_Down
+			if elev.Floor == elevData.NumFloors-1 {
+				elev.Direction = elevData.ED_Down
 			} else if elev.Floor == 0 {
-				elev.Direction = elevator.ED_Up
+				elev.Direction = elevData.ED_Up
 			}
 			go stopAtFloor(PRCompletions, DRCompletion)
 		}
@@ -320,9 +235,10 @@ func handlePR(recievedPRs, globalPRs chan [][2]bool, PRsChange chan bool) {
 	}
 }
 
-func detectElevStateChange(elevState chan elevator.Elevator) {
+func detectElevStateChange(elevState chan elevData.Elevator) {
 	for {
 		elevState <- elev
+		fmt.Println("pr list ", elev.PRList)
 		time.Sleep(1000 * time.Millisecond)
 	}
 }
@@ -332,7 +248,7 @@ func checkIfStuck(PRCompletions, PRCompletionOut chan [][2]bool, DRCompletion, P
 	for {
 		select {
 		case <-timeOut.C:
-			if hasJobsWaiting() {
+			if hasJobsWaiting(elev) {
 				panic("elevator is stuck")
 			}
 		case <-PRsChange:
@@ -346,9 +262,9 @@ func checkIfStuck(PRCompletions, PRCompletionOut chan [][2]bool, DRCompletion, P
 	}
 }
 
-func Initialize(newPRs, recievedPRs, PRCompletionsOut, globalPRs chan [][2]bool, elevState chan elevator.Elevator) {
-	elev = elevator.CreateElev()
-	elevio.Init("localhost:23001", numFloors)
+func Initialize(newPRs, recievedPRs, PRCompletionsOut, globalPRs chan [][2]bool, elevState chan elevData.Elevator) {
+	elev = createElev()
+	elevio.Init("localhost:23002", elevData.NumFloors)
 	drv_floors := make(chan int)
 	drv_obstr := make(chan bool)
 
@@ -366,12 +282,6 @@ func Initialize(newPRs, recievedPRs, PRCompletionsOut, globalPRs chan [][2]bool,
 	go detectElevStateChange(elevState)
 	go checkIfStuck(PRCompletions, PRCompletionsOut, DRCompletion, PRsChange, DRAdded)
 
-	//code for testing purposes
-	// for f := 0; f < numFloors; f++ {
-	// 	for b := elevio.ButtonType(0); b < 3; b++ {
-	// 		elevio.SetButtonLamp(b, f, false)
-	// 	}
-	// }
 	elevio.SetDoorOpenLamp(false)
 	fmt.Println("Elev initialized")
 }

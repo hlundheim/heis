@@ -1,86 +1,99 @@
 package redundantComm
 
 import (
-	"heis/elevator"
+	"heis/elevData"
 	"reflect"
+	"time"
 )
 
 var times int = 100
 
-func RedundantSendBoolArray(sendCh, reciCh chan [][2]bool) {
+func RedundantSendBoolArray(reciCh, sendCh chan [][2]bool) {
 	for {
 		val := <-reciCh
 		for i := 0; i < times; i++ {
 			sendCh <- val
-		}
-		for i := 0; i < times; i++ {
-			sendCh <- make([][2]bool, 0)
 		}
 	}
 }
 
 func RedundantRecieveBoolArray(reciCh, sendCh chan [][2]bool) {
-	currentVal := <-reciCh
-	sendCh <- currentVal
 	for {
-		val := <-reciCh
-		if !reflect.DeepEqual(currentVal, val) {
-			currentVal = val
-			if len(val) != 0 {
-				sendCh <- val
+	out:
+		currentVal := <-reciCh
+		sendCh <- currentVal
+		timer := time.NewTimer(500 * time.Millisecond)
+		for {
+			select {
+			case val := <-reciCh:
+				if !reflect.DeepEqual(currentVal, val) {
+					currentVal = val
+					sendCh <- val
+				}
+			case <-timer.C:
+				goto out
 			}
+
 		}
 	}
 }
 
-func RedundantSendElevPacket(sendCh, reciCh chan elevator.ElevPacket) {
+func RedundantSendElevPacket(reciCh, sendCh chan elevData.ElevPacket) {
 	for {
 		val := <-reciCh
 		for i := 0; i < times; i++ {
 			sendCh <- val
 		}
-		for i := 0; i < times; i++ {
-			sendCh <- elevator.ElevPacket{"test", elevator.Elevator{}}
-		}
 	}
 }
 
-func RedundantRecieveElevPacket(reciCh, sendCh chan elevator.ElevPacket) {
-	currentVal := <-reciCh
-	sendCh <- currentVal
+func RedundantRecieveElevPacket(reciCh, sendCh chan elevData.ElevPacket) {
 	for {
-		val := <-reciCh
-		if !reflect.DeepEqual(currentVal, val) {
-			currentVal = val
-			if val.Birthday != "test" {
-				sendCh <- val
+	out:
+		currentVal := <-reciCh
+		sendCh <- currentVal
+		timer := time.NewTimer(500 * time.Millisecond)
+		for {
+			select {
+			case val := <-reciCh:
+				if !reflect.DeepEqual(currentVal, val) {
+					currentVal = val
+					sendCh <- val
+				}
+			case <-timer.C:
+				goto out
 			}
+
 		}
 	}
 }
 
-func RedundantSendMap(sendCh, reciCh chan map[string][][2]bool) {
+func RedundantSendMap(reciCh, sendCh chan map[string][][2]bool) {
 	for {
 		val := <-reciCh
 		for i := 0; i < times; i++ {
 			sendCh <- val
-		}
-		for i := 0; i < times; i++ {
-			sendCh <- make(map[string][][2]bool, 0)
 		}
 	}
 }
 
 func RedundantRecieveMap(reciCh, sendCh chan map[string][][2]bool) {
-	currentVal := <-reciCh
-	sendCh <- currentVal
 	for {
-		val := <-reciCh
-		if !reflect.DeepEqual(currentVal, val) {
-			currentVal = val
-			if len(val) != 0 {
-				sendCh <- val
+	out:
+		currentVal := <-reciCh
+		sendCh <- currentVal
+		timer := time.NewTimer(500 * time.Millisecond)
+		for {
+			select {
+			case val := <-reciCh:
+				if !reflect.DeepEqual(currentVal, val) {
+					currentVal = val
+					sendCh <- val
+				}
+			case <-timer.C:
+				goto out
 			}
+
 		}
 	}
 }
