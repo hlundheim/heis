@@ -1,8 +1,8 @@
 	/*
 		for {
-				NewPRs <- [][2]bool{{true, false}, {false, false}, {false, false}, {false, false}}
+				newPRch <- [][2]bool{{true, false}, {false, false}, {false, false}, {false, false}}
 				PRs = <-PRUpdates
-				NewPRs <- [][2]bool{{false, false}, {false, false}, {false, true}, {false, false}}
+				newPRch <- [][2]bool{{false, false}, {false, false}, {false, true}, {false, false}}
 				PRs = <-PRUpdates
 				PRCompletions <- [][2]bool{{false, false}, {false, false}, {false, true}, {false, false}}
 				PRs = <-PRUpdates
@@ -13,10 +13,10 @@
 
     /*
     for {
-        newPRs <- [][2]bool{{false, false}, {false, false}, {false, true}, {false, false}}
+        newPRch <- [][2]bool{{false, false}, {false, false}, {false, true}, {false, false}}
         PRCompletions <- [][2]bool{{true, false}, {false, false}, {false, false}, {false, false}}
         time.Sleep(1 * time.Second)
-        newPRs <- [][2]bool{{true, false}, {false, false}, {false, false}, {false, false}}
+        newPRch <- [][2]bool{{true, false}, {false, false}, {false, false}, {false, false}}
         PRCompletions <- [][2]bool{{false, false}, {false, false}, {false, true}, {false, false}}
 
         time.Sleep(1 * time.Second)

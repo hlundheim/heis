@@ -1,7 +1,6 @@
 package elder
 
 import (
-	"fmt"
 	"heis/PRAssigner"
 	"heis/PRSyncElder"
 	"heis/elevData"
@@ -13,9 +12,7 @@ import (
 
 func checkIfDisc(liveElevs chan []string, liveElevsFetchReq chan bool) {
 	for {
-		fmt.Println("ja")
 		if !elevatorLifeStates.CheckIfElder(liveElevs, liveElevsFetchReq) {
-			fmt.Println("jippi")
 			panic("du er disconnected")
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -66,7 +63,6 @@ func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map
 }
 
 func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool, PRs [][2]bool) {
-	port := 57000
 	elevInfo := make(chan elevData.ElevPacket)
 	elevInfoRed := make(chan elevData.ElevPacket)
 	distributedPRs := make(chan map[string][][2]bool)
@@ -76,10 +72,10 @@ func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool, PRs [][2]b
 	PRFetchReq := make(chan bool)
 
 	go PRSyncElder.Initialize(PRUpdates2, PRs, PRFetchReq)
-	go bcast.Receiver(port+1, elevInfoRed)
+	go bcast.Receiver(elevData.Port+1, elevInfoRed)
 	go redundantComm.RedundantRecieveElevPacket(elevInfoRed, elevInfo)
 	go redundantComm.RedundantSendMap(distributedPRs, distributedPRsRed)
-	go bcast.Transmitter(port+2, distributedPRsRed)
+	go bcast.Transmitter(elevData.Port+2, distributedPRsRed)
 	go DistributePRs(distributedPRs, elevStates, PRUpdates2, PRFetchReq)
 	go MaintainElevStates(elevInfo, liveElevs, liveElevsFetchReq, elevStates)
 	go checkIfDisc(liveElevs, liveElevsFetchReq)

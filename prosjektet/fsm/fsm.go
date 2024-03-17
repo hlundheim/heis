@@ -159,21 +159,21 @@ func handleJobsWaiting(PRCompletions chan [][2]bool, DRCompletion chan bool) {
 	}
 }
 
-func handleButtonPress(button elevio.ButtonEvent, newPRs chan [][2]bool, DRAdded chan bool) {
+func handleButtonPress(button elevio.ButtonEvent, newPRch chan [][2]bool, DRAdded chan bool) {
 	switch button.Button {
 	case elevio.BT_Cab:
 		addDR(button.Floor, DRAdded)
 		elevio.SetButtonLamp(button.Button, button.Floor, true)
 	case elevio.BT_HallUp:
-		updateAndBroadcastPRList(button, newPRs)
+		updateAndBroadcastPRList(button, newPRch)
 	case elevio.BT_HallDown:
-		updateAndBroadcastPRList(button, newPRs)
+		updateAndBroadcastPRList(button, newPRch)
 	default:
 		break
 	}
 }
 
-func updateAndBroadcastPRList(button elevio.ButtonEvent, newPRs chan [][2]bool) {
+func updateAndBroadcastPRList(button elevio.ButtonEvent, newPRch chan [][2]bool) {
 	broadcastPRList := generateBlankPRs()
 	switch button.Button {
 	case elevio.BT_HallDown:
@@ -181,7 +181,7 @@ func updateAndBroadcastPRList(button elevio.ButtonEvent, newPRs chan [][2]bool) 
 	case elevio.BT_HallUp:
 		broadcastPRList[button.Floor][0] = true
 	}
-	newPRs <- broadcastPRList
+	newPRch <- broadcastPRList
 }
 
 func updateHallButtonLights(PRs [][2]bool) {
@@ -191,12 +191,12 @@ func updateHallButtonLights(PRs [][2]bool) {
 	}
 }
 
-func buttonHandling(newPRs chan [][2]bool, DRAdded chan bool) {
+func buttonHandling(newPRch chan [][2]bool, DRAdded chan bool) {
 	drv_buttons := make(chan elevio.ButtonEvent)
 	go elevio.PollButtons(drv_buttons)
 	for {
 		button := <-drv_buttons
-		handleButtonPress(button, newPRs, DRAdded)
+		handleButtonPress(button, newPRch, DRAdded)
 	}
 }
 
@@ -262,9 +262,9 @@ func checkIfStuck(PRCompletions, PRCompletionOut chan [][2]bool, DRCompletion, P
 	}
 }
 
-func Initialize(newPRs, recievedPRs, PRCompletionsOut, globalPRs chan [][2]bool, elevState chan elevData.Elevator) {
+func Initialize(newPRch, recievedPRs, PRCompletionsOut, globalPRs chan [][2]bool, elevState chan elevData.Elevator) {
 	elev = createElev()
-	elevio.Init("localhost:23002", elevData.NumFloors)
+	elevio.Init("localhost:23001", elevData.NumFloors)
 	drv_floors := make(chan int)
 	drv_obstr := make(chan bool)
 
@@ -274,7 +274,7 @@ func Initialize(newPRs, recievedPRs, PRCompletionsOut, globalPRs chan [][2]bool,
 	PRsChange := make(chan bool)
 	DRAdded := make(chan bool)
 
-	go buttonHandling(newPRs, DRAdded)
+	go buttonHandling(newPRch, DRAdded)
 	go floorHandling(drv_floors, PRCompletions, DRCompletion)
 	go elevio.PollObstructionSwitch(drv_obstr)
 	go handlePR(recievedPRs, globalPRs, PRsChange)

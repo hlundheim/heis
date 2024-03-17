@@ -1,6 +1,7 @@
 package PRSyncElder
 
 import (
+	"heis/elevData"
 	"heis/network/bcast"
 	"heis/network/redundantComm"
 )
@@ -25,10 +26,10 @@ func completePR(PRs, PRCompletion [][2]bool) [][2]bool {
 	return PRs
 }
 
-func UpdatePRs(PRs [][2]bool, NewPRs, PRCompletions, PRUpdates, PRUpdates2 chan [][2]bool, PRFetchReq chan bool) {
+func UpdatePRs(PRs [][2]bool, newPRch, PRCompletions, PRUpdates, PRUpdates2 chan [][2]bool, PRFetchReq chan bool) {
 	for {
 		select {
-		case newPR := <-NewPRs:
+		case newPR := <-newPRch:
 			PRs = addNewPR(PRs, newPR)
 		case PRCompletion := <-PRCompletions:
 			PRs = completePR(PRs, PRCompletion)
@@ -40,20 +41,19 @@ func UpdatePRs(PRs [][2]bool, NewPRs, PRCompletions, PRUpdates, PRUpdates2 chan 
 }
 
 func Initialize(PRUpdates2 chan [][2]bool, PRs [][2]bool, PRFetchReq chan bool) {
-	port := 57000
-	NewPRs := make(chan [][2]bool)
+	newPRch := make(chan [][2]bool)
 	NewPRsRed := make(chan [][2]bool)
 	PRCompletions := make(chan [][2]bool)
 	PRCompletionsRed := make(chan [][2]bool)
 	PRUpdates := make(chan [][2]bool)
 	PRUpdatesRed := make(chan [][2]bool)
 
-	go bcast.Receiver(port+3, NewPRsRed)
-	go redundantComm.RedundantRecieveBoolArray(NewPRsRed, NewPRs)
-	go bcast.Receiver(port+4, PRCompletionsRed)
+	go bcast.Receiver(elevData.Port+3, NewPRsRed)
+	go redundantComm.RedundantRecieveBoolArray(NewPRsRed, newPRch)
+	go bcast.Receiver(elevData.Port+4, PRCompletionsRed)
 	go redundantComm.RedundantRecieveBoolArray(PRCompletionsRed, PRCompletions)
-	go UpdatePRs(PRs, NewPRs, PRCompletions, PRUpdates, PRUpdates2, PRFetchReq)
+	go UpdatePRs(PRs, newPRch, PRCompletions, PRUpdates, PRUpdates2, PRFetchReq)
 	go redundantComm.RedundantSendBoolArray(PRUpdates, PRUpdatesRed)
-	go bcast.Transmitter(port+5, PRUpdatesRed)
+	go bcast.Transmitter(elevData.Port+5, PRUpdatesRed)
 
 }

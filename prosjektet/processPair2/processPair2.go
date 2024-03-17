@@ -1,10 +1,12 @@
 package processPair2
 
 import (
+	"heis/elevData"
 	"heis/utilities/utilities"
 	"net"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -18,8 +20,7 @@ func primaryBroadcast(primarySocket net.Conn) {
 
 func Initialize() {
 	ip := "localhost"
-	port := ":57007"
-	a, err := net.ResolveUDPAddr("udp4", ip+port)
+	a, err := net.ResolveUDPAddr("udp4", ip+strconv.Itoa(elevData.Port+7))
 	utilities.HandleError(err)
 	backupSocket, err := net.ListenUDP("udp4", a)
 	utilities.HandleError(err)
@@ -34,7 +35,7 @@ func Initialize() {
 	}
 
 	backupSocket.Close()
-	addr, err := net.ResolveUDPAddr("udp4", ip+port)
+	addr, err := net.ResolveUDPAddr("udp4", ip+strconv.Itoa(elevData.Port+7))
 	utilities.HandleError(err)
 	primarySocket, err := net.DialUDP("udp4", nil, addr)
 	utilities.HandleError(err)

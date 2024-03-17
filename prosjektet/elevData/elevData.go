@@ -4,6 +4,9 @@ import "time"
 
 const NumFloors = 4
 const DoorTimer = 3 * time.Second
+const Port = 57000
+
+var LocalBirthday = time.Now().Format(time.RFC3339Nano)
 
 type ElevatorBehavior int
 

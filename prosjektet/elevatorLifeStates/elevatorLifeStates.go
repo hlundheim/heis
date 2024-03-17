@@ -2,12 +2,11 @@ package elevatorLifeStates
 
 import (
 	"fmt"
+	"heis/elevData"
 	"heis/network/peers"
 	"heis/utilities"
 	"time"
 )
-
-var LocalBirthday = time.Now().Format(time.RFC3339Nano)
 
 func updateLiveElevs(elevUpdates chan peers.PeerUpdate, liveElevs chan []string, liveElevsFetchReq chan bool) {
 	var currentElevs peers.PeerUpdate
@@ -30,7 +29,7 @@ func CheckIfElder(liveElevs chan []string, liveElevFetchReq chan bool) bool {
 		return false
 	} else {
 		elderBirthday := liveElevsAAA[0]
-		return (elderBirthday == LocalBirthday && len(liveElevsAAA) > 1)
+		return (elderBirthday == elevData.LocalBirthday && len(liveElevsAAA) > 1)
 	}
 }
 
@@ -54,10 +53,9 @@ func sortElevsByAge(liveElevs []string) []string {
 }
 
 func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool) {
-	port := 57000
 	elevUpdateEN := make(chan bool)
 	elevUpdates := make(chan peers.PeerUpdate)
-	go peers.Transmitter(port, LocalBirthday, elevUpdateEN)
-	go peers.Receiver(port, elevUpdates)
+	go peers.Transmitter(elevData.Port, elevData.LocalBirthday, elevUpdateEN)
+	go peers.Receiver(elevData.Port, elevUpdates)
 	go updateLiveElevs(elevUpdates, liveElevs, liveElevsFetchReq)
 }
