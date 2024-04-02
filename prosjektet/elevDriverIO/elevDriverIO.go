@@ -1,4 +1,4 @@
-package elevio
+package elevDriverIO
 
 import (
 	"fmt"

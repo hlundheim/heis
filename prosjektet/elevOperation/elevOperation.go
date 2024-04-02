@@ -1,10 +1,9 @@
-package fsm
+package elevOperation
 
 import (
-	"fmt"
 	"heis/DRStorage"
 	"heis/elevData"
-	"heis/elevio"
+	"heis/elevDriverIO"
 	"heis/utilities"
 	"reflect"
 	"time"
@@ -22,26 +21,26 @@ func createElev() elevData.Elevator {
 func initBetweenFloors() {
 	elev.Behavior = elevData.EB_Moving
 	elev.Direction = elevData.ED_Down
-	elevio.SetMotorDirection(elevio.MD_Down)
+	elevDriverIO.SetMotorDirection(elevDriverIO.MD_Down)
 }
 
 func initElev(drv_floors chan int) {
-	elev.Floor = elevio.GetFloor()
+	elev.Floor = elevDriverIO.GetFloor()
 	if elev.Floor == -1 {
 		initBetweenFloors()
 	} else if elev.Floor != -1 {
 		elev.Behavior = elevData.EB_Idle
 		elev.Direction = elevData.ED_Stop
-		elevio.SetMotorDirection(elevio.MD_Stop)
-		elevio.SetFloorIndicator(elev.Floor)
+		elevDriverIO.SetMotorDirection(elevDriverIO.MD_Stop)
+		elevDriverIO.SetFloorIndicator(elev.Floor)
 	}
 	for i := range elev.DRList {
-		elevio.SetButtonLamp(elevio.BT_Cab, i, elev.DRList[i])
+		elevDriverIO.SetButtonLamp(elevDriverIO.BT_Cab, i, elev.DRList[i])
 	}
 }
 
 func atFloorArrival(PRCompletions chan [][2]bool, DRCompletion chan bool) {
-	elevio.SetFloorIndicator(elev.Floor)
+	elevDriverIO.SetFloorIndicator(elev.Floor)
 	if elev.Floor == elevData.NumFloors-1 {
 		elev.Direction = elevData.ED_Down
 	} else if elev.Floor == 0 {
@@ -52,7 +51,7 @@ func atFloorArrival(PRCompletions chan [][2]bool, DRCompletion chan bool) {
 		if requestsShouldStop(elev) {
 			go stopAtFloor(PRCompletions, DRCompletion)
 		} else if !requestsAbove(elev) && !requestsBelow(elev) {
-			elevio.SetMotorDirection(elevio.MD_Stop)
+			elevDriverIO.SetMotorDirection(elevDriverIO.MD_Stop)
 			elev.Behavior = elevData.EB_Idle
 			elev.Direction = elevData.ED_Stop
 		}
@@ -87,7 +86,7 @@ func completePR(direction elevData.ElevatorDirection, PRCompletions chan [][2]bo
 
 func clearRequestsAtCurrentFloor(PRCompletions chan [][2]bool, DRCompletion chan bool) {
 	completeDR(DRCompletion)
-	elevio.SetButtonLamp(elevio.BT_Cab, elev.Floor, false)
+	elevDriverIO.SetButtonLamp(elevDriverIO.BT_Cab, elev.Floor, false)
 	switch elev.Direction {
 	case elevData.ED_Stop:
 		completePR(elevData.ED_Up, PRCompletions)
@@ -103,14 +102,14 @@ func clearRequestsAtCurrentFloor(PRCompletions chan [][2]bool, DRCompletion chan
 }
 
 func stopAtFloor(PRCompletions chan [][2]bool, DRCompletion chan bool) {
-	elevio.SetMotorDirection(elevio.MD_Stop)
+	elevDriverIO.SetMotorDirection(elevDriverIO.MD_Stop)
 	clearRequestsAtCurrentFloor(PRCompletions, DRCompletion)
-	elevio.SetDoorOpenLamp(true)
+	elevDriverIO.SetDoorOpenLamp(true)
 	elev.Behavior = elevData.EB_DoorOpen
 	time.Sleep(elevData.DoorTimer)
-	if elevio.GetObstruction() {
-		for elevio.GetObstruction() {
-			elevio.SetDoorOpenLamp(true)
+	if elevDriverIO.GetObstruction() {
+		for elevDriverIO.GetObstruction() {
+			elevDriverIO.SetDoorOpenLamp(true)
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
@@ -125,11 +124,11 @@ func checkForJobsInDirecton(PRCompletions chan [][2]bool, DRCompletion chan bool
 	if checkDRHere(elev) {
 		go stopAtFloor(PRCompletions, DRCompletion)
 	} else if requestsInDirection(elev) {
-		elevio.SetDoorOpenLamp(false)
+		elevDriverIO.SetDoorOpenLamp(false)
 		elev.Behavior = elevData.EB_Moving
-		elevio.SetMotorDirection(utilities.ConvertEDtoMD(elev.Direction))
+		elevDriverIO.SetMotorDirection(utilities.ConvertEDtoMD(elev.Direction))
 	} else {
-		elevio.SetDoorOpenLamp(false)
+		elevDriverIO.SetDoorOpenLamp(false)
 		elev.Behavior = elevData.EB_Idle
 		elev.Direction = elevData.ED_Stop
 	}
@@ -145,11 +144,11 @@ func handleJobsWaiting(PRCompletions chan [][2]bool, DRCompletion chan bool) {
 				} else if requestsAbove(elev) {
 					elev.Behavior = elevData.EB_Moving
 					elev.Direction = elevData.ED_Up
-					elevio.SetMotorDirection(utilities.ConvertEDtoMD(elev.Direction))
+					elevDriverIO.SetMotorDirection(utilities.ConvertEDtoMD(elev.Direction))
 				} else if requestsBelow(elev) {
 					elev.Behavior = elevData.EB_Moving
 					elev.Direction = elevData.ED_Down
-					elevio.SetMotorDirection(utilities.ConvertEDtoMD(elev.Direction))
+					elevDriverIO.SetMotorDirection(utilities.ConvertEDtoMD(elev.Direction))
 				}
 			default:
 				break
@@ -159,54 +158,54 @@ func handleJobsWaiting(PRCompletions chan [][2]bool, DRCompletion chan bool) {
 	}
 }
 
-func handleButtonPress(button elevio.ButtonEvent, newPRch chan [][2]bool, DRAdded chan bool) {
+func handleButtonPress(button elevDriverIO.ButtonEvent, newPRs chan [][2]bool, DRAdded chan bool) {
 	switch button.Button {
-	case elevio.BT_Cab:
+	case elevDriverIO.BT_Cab:
 		addDR(button.Floor, DRAdded)
-		elevio.SetButtonLamp(button.Button, button.Floor, true)
-	case elevio.BT_HallUp:
-		updateAndBroadcastPRList(button, newPRch)
-	case elevio.BT_HallDown:
-		updateAndBroadcastPRList(button, newPRch)
+		elevDriverIO.SetButtonLamp(button.Button, button.Floor, true)
+	case elevDriverIO.BT_HallUp:
+		updateAndBroadcastPRList(button, newPRs)
+	case elevDriverIO.BT_HallDown:
+		updateAndBroadcastPRList(button, newPRs)
 	default:
 		break
 	}
 }
 
-func updateAndBroadcastPRList(button elevio.ButtonEvent, newPRch chan [][2]bool) {
+func updateAndBroadcastPRList(button elevDriverIO.ButtonEvent, newPRs chan [][2]bool) {
 	broadcastPRList := generateBlankPRs()
 	switch button.Button {
-	case elevio.BT_HallDown:
+	case elevDriverIO.BT_HallDown:
 		broadcastPRList[button.Floor][1] = true
-	case elevio.BT_HallUp:
+	case elevDriverIO.BT_HallUp:
 		broadcastPRList[button.Floor][0] = true
 	}
-	newPRch <- broadcastPRList
+	newPRs <- broadcastPRList
 }
 
 func updateHallButtonLights(PRs [][2]bool) {
 	for i, v := range PRs {
-		elevio.SetButtonLamp(elevio.BT_HallUp, i, v[0])
-		elevio.SetButtonLamp(elevio.BT_HallDown, i, v[1])
+		elevDriverIO.SetButtonLamp(elevDriverIO.BT_HallUp, i, v[0])
+		elevDriverIO.SetButtonLamp(elevDriverIO.BT_HallDown, i, v[1])
 	}
 }
 
-func buttonHandling(newPRch chan [][2]bool, DRAdded chan bool) {
-	drv_buttons := make(chan elevio.ButtonEvent)
-	go elevio.PollButtons(drv_buttons)
+func buttonHandling(newPRs chan [][2]bool, DRAdded chan bool) {
+	drv_buttons := make(chan elevDriverIO.ButtonEvent)
+	go elevDriverIO.PollButtons(drv_buttons)
 	for {
 		button := <-drv_buttons
-		handleButtonPress(button, newPRch, DRAdded)
+		handleButtonPress(button, newPRs, DRAdded)
 	}
 }
 
 func floorHandling(drv_floors chan int, PRCompletions chan [][2]bool, DRCompletion chan bool) {
-	go elevio.PollFloorSensor(drv_floors)
+	go elevDriverIO.PollFloorSensor(drv_floors)
 	for {
 		newFloor := <-drv_floors
 		if elev.Floor == -1 {
 			elev.Floor = newFloor
-			elevio.SetFloorIndicator(elev.Floor)
+			elevDriverIO.SetFloorIndicator(elev.Floor)
 			if elev.Floor == elevData.NumFloors-1 {
 				elev.Direction = elevData.ED_Down
 			} else if elev.Floor == 0 {
@@ -221,10 +220,10 @@ func floorHandling(drv_floors chan int, PRCompletions chan [][2]bool, DRCompleti
 	}
 }
 
-func handlePR(recievedPRs, globalPRs chan [][2]bool, PRsChange chan bool) {
+func handlePR(localPRs, globalPRs chan [][2]bool, PRsChange chan bool) {
 	for {
 		select {
-		case PRs := <-recievedPRs:
+		case PRs := <-localPRs:
 			if !reflect.DeepEqual(elev.PRList, PRs) {
 				elev.PRList = PRs
 				PRsChange <- true
@@ -238,7 +237,6 @@ func handlePR(recievedPRs, globalPRs chan [][2]bool, PRsChange chan bool) {
 func detectElevStateChange(elevState chan elevData.Elevator) {
 	for {
 		elevState <- elev
-		fmt.Println("pr list ", elev.PRList)
 		time.Sleep(1000 * time.Millisecond)
 	}
 }
@@ -262,9 +260,9 @@ func checkIfStuck(PRCompletions, PRCompletionOut chan [][2]bool, DRCompletion, P
 	}
 }
 
-func Initialize(newPRch, recievedPRs, PRCompletionsOut, globalPRs chan [][2]bool, elevState chan elevData.Elevator) {
+func Initialize(newPRs, localPRs, PRCompletionChOut, globalPRs chan [][2]bool, elevState chan elevData.Elevator) {
 	elev = createElev()
-	elevio.Init("localhost:23001", elevData.NumFloors)
+	elevDriverIO.Init("localhost:15657", elevData.NumFloors)
 	drv_floors := make(chan int)
 	drv_obstr := make(chan bool)
 
@@ -274,14 +272,13 @@ func Initialize(newPRch, recievedPRs, PRCompletionsOut, globalPRs chan [][2]bool
 	PRsChange := make(chan bool)
 	DRAdded := make(chan bool)
 
-	go buttonHandling(newPRch, DRAdded)
+	go buttonHandling(newPRs, DRAdded)
 	go floorHandling(drv_floors, PRCompletions, DRCompletion)
-	go elevio.PollObstructionSwitch(drv_obstr)
-	go handlePR(recievedPRs, globalPRs, PRsChange)
+	go elevDriverIO.PollObstructionSwitch(drv_obstr)
+	go handlePR(localPRs, globalPRs, PRsChange)
 	go handleJobsWaiting(PRCompletions, DRCompletion)
 	go detectElevStateChange(elevState)
-	go checkIfStuck(PRCompletions, PRCompletionsOut, DRCompletion, PRsChange, DRAdded)
+	go checkIfStuck(PRCompletions, PRCompletionChOut, DRCompletion, PRsChange, DRAdded)
 
-	elevio.SetDoorOpenLamp(false)
-	fmt.Println("Elev initialized")
+	elevDriverIO.SetDoorOpenLamp(false)
 }

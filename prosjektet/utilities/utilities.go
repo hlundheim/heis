@@ -3,7 +3,7 @@ package utilities
 import (
 	"fmt"
 	"heis/elevData"
-	"heis/elevio"
+	"heis/elevDriverIO"
 )
 
 func HandleError(err error) {
@@ -12,12 +12,12 @@ func HandleError(err error) {
 	}
 }
 
-func ConvertEDtoMD(dir elevData.ElevatorDirection) elevio.MotorDirection {
+func ConvertEDtoMD(dir elevData.ElevatorDirection) elevDriverIO.MotorDirection {
 	if dir == elevData.ED_Up {
-		return elevio.MD_Up
+		return elevDriverIO.MD_Up
 	} else if dir == elevData.ED_Down {
-		return elevio.MD_Down
+		return elevDriverIO.MD_Down
 	} else {
-		return elevio.MD_Stop
+		return elevDriverIO.MD_Stop
 	}
 }

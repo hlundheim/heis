@@ -2,11 +2,11 @@ package elder
 
 import (
 	"heis/PRAssigner"
-	"heis/PRSyncElder"
+	"heis/elderPRUpdater"
 	"heis/elevData"
 	"heis/elevatorLifeStates"
 	"heis/network/bcast"
-	"heis/network/redundantComm"
+	"heis/network/redundComm"
 	"time"
 )
 
@@ -45,20 +45,11 @@ func MaintainElevStates(elevInfo chan elevData.ElevPacket, liveElevs chan []stri
 	}
 }
 
-func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map[string]elevData.Elevator, PRUpdates2 chan [][2]bool, PRFetchReq chan bool) {
+func DistributePRs(distributedPRs chan map[string][][2]bool, elevStates chan map[string]elevData.Elevator, PRUpdates chan [][2]bool, PRFetchReq chan bool) {
 	for {
 		currentElevState := <-elevStates
 		PRFetchReq <- true
-		distributedPRs <- PRAssigner.AssignPRs(currentElevState, <-PRUpdates2)
-
-		// a := <-elevStates
-		// PRFetchReq <- true
-		// b := <-PRUpdates2
-		// fmt.Println(a)
-		// fmt.Println(b)
-		// c := PRAssigner.AssignPRs(a, b)
-		// fmt.Println("elder fordelt PR: ", c)
-		// distributedPRs <- c
+		distributedPRs <- PRAssigner.AssignPRs(currentElevState, <-PRUpdates)
 	}
 }
 
@@ -68,15 +59,15 @@ func Initialize(liveElevs chan []string, liveElevsFetchReq chan bool, PRs [][2]b
 	distributedPRs := make(chan map[string][][2]bool)
 	distributedPRsRed := make(chan map[string][][2]bool)
 	elevStates := make(chan map[string]elevData.Elevator)
-	PRUpdates2 := make(chan [][2]bool)
+	PRUpdates := make(chan [][2]bool)
 	PRFetchReq := make(chan bool)
 
-	go PRSyncElder.Initialize(PRUpdates2, PRs, PRFetchReq)
+	go elderPRUpdater.Initialize(PRUpdates, PRs, PRFetchReq)
 	go bcast.Receiver(elevData.Port+1, elevInfoRed)
-	go redundantComm.RedundantRecieveElevPacket(elevInfoRed, elevInfo)
-	go redundantComm.RedundantSendMap(distributedPRs, distributedPRsRed)
+	go redundComm.RedundantRecieveElevPacket(elevInfoRed, elevInfo)
+	go redundComm.RedundantSendMap(distributedPRs, distributedPRsRed)
 	go bcast.Transmitter(elevData.Port+2, distributedPRsRed)
-	go DistributePRs(distributedPRs, elevStates, PRUpdates2, PRFetchReq)
+	go DistributePRs(distributedPRs, elevStates, PRUpdates, PRFetchReq)
 	go MaintainElevStates(elevInfo, liveElevs, liveElevsFetchReq, elevStates)
 	go checkIfDisc(liveElevs, liveElevsFetchReq)
 }

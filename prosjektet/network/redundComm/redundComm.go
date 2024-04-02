@@ -1,4 +1,4 @@
-package redundantComm
+package redundComm
 
 import (
 	"heis/elevData"

@@ -6,7 +6,6 @@ import (
 	"heis/elevData"
 	"os/exec"
 	"runtime"
-	"sync"
 )
 
 type PRAElevState struct {
@@ -22,17 +21,13 @@ type PRAInput struct {
 }
 
 func PRAFormatStates(elevState map[string]elevData.Elevator) map[string]PRAElevState {
-	mutex := &sync.Mutex{}
-	mutex.Lock()
 	PRAStates := make(map[string]PRAElevState)
-
 	for birthday, state := range elevState {
 		//avoid giving orders to unititalised elevs
 		if state.Floor != -1 {
 			PRAStates[birthday] = PRAFormatState(state)
 		}
 	}
-	mutex.Unlock()
 	return PRAStates
 }
 
